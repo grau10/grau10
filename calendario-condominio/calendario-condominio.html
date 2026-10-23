@@ -1,0 +1,1428 @@
+<title>Calendário do Condomínio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: estrutura do Calendário do iPhone (grade compacta com marcadores e lista do dia logo abaixo), acabamento do calendário do Airbnb (células arredondadas, preto sobre branco, pílulas flutuantes). Visual claro por escolha. */
+:root{
+  color-scheme:light;
+  --bg:#ffffff; --ink:#222222; --muted:#6a6a6a; --faint:#b0b0b0; --line:#ebebeb; --line-2:#dddddd; --soft:#f7f7f7;
+  --prev:#00968a; --corr:#e0174f; --outr:#5b5bd6; --late:#c13515; --warn:#b25e00; --good:#00796b;
+  --f:"Figtree","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+  --shadow:0 6px 20px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 120px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+.c-preventiva{--c:var(--prev)} .c-corretiva{--c:var(--corr)} .c-outras{--c:var(--outr)}
+
+.app{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* barra superior */
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pill{display:inline-flex;align-items:center;background:var(--bg);border:1px solid var(--line-2);border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.pill > button{height:42px;min-width:44px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-weight:600}
+.pill > button:hover{background:var(--soft)}
+.pill > button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.head{display:flex;flex-direction:column;gap:4px}
+.head .condo{font-size:13px;font-weight:600;color:var(--muted)}
+.head h1{font-size:clamp(34px,7vw,46px);font-weight:800;letter-spacing:-.02em}
+.head h1 span{color:var(--faint);font-weight:700}
+.summary{font-size:14px;color:var(--muted)}
+.summary b{color:var(--ink);font-weight:600}
+.summary .late{color:var(--late)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip[aria-pressed="false"]{color:var(--faint)}
+.chip[aria-pressed="false"] .dot{background:var(--line-2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+
+.notice{border:1px solid var(--line-2);border-radius:12px;padding:16px;font-size:14.5px;color:var(--muted)}
+.notice b{color:var(--ink)}
+.notice button{text-decoration:underline;font-weight:600;color:var(--ink)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
+@media (min-width:960px){.main{grid-template-columns:minmax(0,1fr) 380px}}
+
+/* grade (Airbnb) */
+.dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.dow div{text-align:center;font-size:13px;color:var(--muted);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cell{position:relative;aspect-ratio:1/1.08;border:1px solid var(--line-2);border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px 6px;min-width:0;background:var(--bg);transition:border-color .12s}
+.cell:hover{border-color:var(--ink)}
+.cell.blank{border:0;pointer-events:none}
+.cell .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:15px}
+.cell.past .n{color:var(--faint)}
+.cell.today .n{background:var(--ink);color:var(--bg)}
+.cell.sel{border:2px solid var(--ink)}
+.cell .flag{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--late)}
+.marks{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:100%}
+.marks i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.marks i.done{background:var(--line-2)}
+.labels{display:none;flex-direction:column;gap:3px;width:100%;padding:0 4px}
+.labels span{font-size:11.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;display:flex;align-items:center;gap:5px}
+.labels span::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c);flex:none}
+.labels span.done{color:var(--faint);text-decoration:line-through}
+.labels em{font-style:normal;font-size:11px;color:var(--muted)}
+@media (min-width:1100px){
+  .cell{aspect-ratio:auto;min-height:112px;align-items:stretch}
+  .cell .n{align-self:center}
+  .cell .marks{display:none}
+  .cell .labels{display:flex}
+}
+
+/* lista (iPhone) */
+.list{display:flex;flex-direction:column;gap:26px}
+.sec{display:flex;flex-direction:column}
+.sec h3{font-size:20px;font-weight:700;padding-bottom:6px}
+.sec .sub{font-size:13.5px;color:var(--muted);padding-bottom:6px}
+.row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);text-align:left;width:100%}
+.row:hover .rt{text-decoration:underline}
+.ring{width:20px;height:20px;border-radius:50%;border:2px solid var(--c);display:grid;place-items:center}
+.ring.on{background:var(--c)}
+.ring.on::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.rt{font-size:16px;font-weight:500;line-height:1.3}
+.row.done .rt{color:var(--muted);text-decoration:line-through}
+.rs{font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rr{font-size:13.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.rr.late{color:var(--late);font-weight:600}
+.rr.today{color:var(--ink);font-weight:600}
+.empty{color:var(--muted);font-size:15px;padding:12px 0;border-bottom:1px solid var(--line)}
+.link{text-decoration:underline;font-weight:600;font-size:15px;padding:12px 0;align-self:flex-start}
+.daygroup{display:flex;flex-direction:column}
+.daygroup h4{margin:0;position:sticky;top:0;background:var(--bg);padding:16px 0 4px;font-size:15px;font-weight:700;border-bottom:1px solid var(--line);z-index:1}
+.daygroup h4 span{color:var(--muted);font-weight:500}
+.daygroup h4.is-today{color:var(--ink)}
+.daygroup h4.is-today::before{content:"Hoje · ";color:var(--corr)}
+
+/* barra inferior flutuante */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-between;align-items:center;pointer-events:none;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dock .pill{pointer-events:auto;box-shadow:var(--shadow);border-color:var(--line)}
+.dock .pill > button{height:52px;min-width:56px;padding:0 20px;font-size:17px}
+
+/* folhas (modais) */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;
+  padding-top:max(24px,env(safe-area-inset-top,0px))}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:100%;overflow-y:auto;border-radius:16px 16px 0 0;box-shadow:var(--shadow);display:flex;flex-direction:column}
+@media (min-width:720px){.ov{align-items:center;padding:32px}.sheet{border-radius:16px;max-height:calc(100vh - 64px)}}
+.sheet-h{position:sticky;top:0;z-index:2;background:var(--bg);display:grid;grid-template-columns:40px 1fr 40px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.sheet-h h2{font-size:16px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.x{width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+.x:hover{background:var(--soft)}
+.sheet-b{padding:24px 24px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:24px}
+.hr{height:1px;background:var(--line);margin:0}
+
+.d-cat{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.d-title{font-size:28px;font-weight:700;letter-spacing:-.01em;margin-top:6px}
+.d-status{font-size:15px;color:var(--muted);margin-top:6px}
+.d-status b.late{color:var(--late)} .d-status b{color:var(--ink)}
+.facts{display:flex;flex-direction:column}
+.fact{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.fact:last-child{border-bottom:0}
+.fact span{color:var(--muted)}
+.fact b{font-weight:500;text-align:right;overflow-wrap:anywhere}
+.blk{display:flex;flex-direction:column;gap:10px}
+.blk h3{font-size:20px;font-weight:700}
+.blk p{margin:0;white-space:pre-wrap;max-width:66ch;font-size:16px;line-height:1.55}
+.blk ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:16px;line-height:1.5}
+.warn{color:var(--late)}
+
+.note{border:1px solid var(--line-2);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.note .nh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.note .nh b{color:var(--ink);font-weight:600}
+.note .ok{color:var(--prev);font-weight:600}
+.note .kv{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14.5px}
+.note .kv span{color:var(--muted)}
+.note p{margin:0;white-space:pre-wrap;font-size:15px}
+.note .del{font-size:13.5px;text-decoration:underline;color:var(--muted)}
+.notes-sum{font-size:14px;color:var(--muted)}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .full{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;border:1px solid var(--faint);border-radius:8px;padding:8px 12px;gap:2px;min-width:0}
+.fld:focus-within{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.fld span{font-size:12px;font-weight:600;color:var(--muted)}
+.fld input,.fld select,.fld textarea{border:0;outline:0;background:transparent;font-size:16px;padding:2px 0;width:100%;min-width:0}
+.fld textarea{min-height:80px;resize:vertical}
+.hint{font-size:12.5px;color:var(--muted)}
+.check{display:flex;align-items:center;gap:10px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--ink)}
+.actions{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.btn{background:var(--ink);color:var(--bg);border-radius:8px;padding:13px 22px;font-weight:600;font-size:16px}
+.btn:hover{background:#000}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sec{background:var(--bg);color:var(--ink);border:1px solid var(--ink)}
+.btn.red{background:var(--late)}
+.tlink{text-decoration:underline;font-weight:600;font-size:15px}
+.tlink.red{color:var(--late)}
+a.tlink{color:var(--ink)}
+.k-tile b.long{font-size:clamp(17px,1.5vw,24px);line-height:1.25}
+.err{color:var(--late);font-size:14px}
+.confirm{border:1px solid var(--late);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;color:var(--late);font-size:15px}
+
+.menu{display:flex;flex-direction:column}
+.menu button{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);font-size:16px;text-align:left}
+.menu button small{display:block;font-size:13.5px;color:var(--muted)}
+.legend{display:flex;flex-direction:column;gap:10px;font-size:14.5px}
+.legend div{display:grid;grid-template-columns:8px 1fr;gap:12px;align-items:baseline}
+.legend .dot{transform:translateY(-2px)}
+.me{display:flex;align-items:center;gap:12px}
+.me img{width:40px;height:40px;border-radius:50%}
+.me small{display:block;color:var(--muted);font-size:13.5px}
+
+.tpl-group{display:flex;flex-direction:column}
+.tpl-group h4{margin:0;font-size:15px;font-weight:700;padding:8px 0;border-bottom:1px solid var(--line)}
+.tpl{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start;font-size:15px}
+.tpl input{width:18px;height:18px;margin-top:2px;accent-color:var(--ink)}
+.tpl .m{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.tpl .per{font-size:12.5px;font-weight:600;color:var(--c)}
+
+.person{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.person img{width:36px;height:36px;border-radius:50%}
+.person .n{flex:1;min-width:0;font-size:15.5px}
+.results{display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:12px;overflow:hidden}
+.results button{display:flex;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);text-align:left}
+.results button:last-child{border-bottom:0}
+.results button:hover{background:var(--soft)}
+.results img{width:28px;height:28px;border-radius:50%}
+
+
+/* abas */
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs button{padding:10px 0 12px;font-size:15.5px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabpane{display:flex;flex-direction:column;gap:18px}
+.tabpane[hidden]{display:none}
+.muted{color:var(--muted);font-size:13.5px}
+.na{color:var(--faint);font-weight:400}
+.sel{user-select:all}
+
+/* visão geral */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid var(--line-2);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi span{font-size:13.5px;color:var(--muted);font-weight:500}
+.kpi b{font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+.kpi b.crit{color:var(--late)}
+.kpi small{font-size:13px;color:var(--muted)}
+.kpi.wide{grid-column:span 2}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{border:1px solid var(--line-2);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
+.card-h h3{font-size:18px;font-weight:700}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.legend-row span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:3px;background:var(--c);display:inline-block;flex:none}
+.chart{width:100%;min-height:250px}
+.chart svg{display:block}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .base{stroke:var(--line-2);stroke-width:1}
+.chart .ax{font-size:11.5px;fill:var(--muted);font-family:var(--f)}
+.chart .ax.cur{fill:var(--ink);font-weight:700}
+.chart .hit:hover{fill:rgba(0,0,0,.035)}
+.tip{position:fixed;z-index:80;pointer-events:none;background:var(--bg);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow);padding:10px 12px;font-size:13px;min-width:170px}
+.tip .tr{display:flex;align-items:center;gap:8px;margin-top:4px}
+.tip .tr span{margin-left:auto;font-variant-numeric:tabular-nums}
+.tip .tr.tot{border-top:1px solid var(--line);padding-top:4px;font-weight:600}
+details.tbl summary{cursor:pointer;font-size:14px;font-weight:600;text-decoration:underline}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:8px 10px 8px 0;border-bottom:1px solid var(--line-2);white-space:nowrap}
+td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.sis td:first-child{white-space:normal;min-width:160px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.st.crit{color:var(--late)} .st.warn{color:var(--warn)} .st.ok{color:var(--good)}
+.stack{display:flex;gap:2px;height:14px}
+.stack i{background:var(--c);border-radius:4px;min-width:4px}
+.stack-labels{display:flex;flex-direction:column}
+.stack-labels div{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.stack-labels div:last-child{border-bottom:0}
+.mini{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);text-align:left;width:100%}
+.mini:last-child{border-bottom:0}
+
+/* edifício */
+.pgrid{display:flex;flex-direction:column}
+.pcard{display:flex;flex-direction:column;padding:10px 0;border-bottom:1px solid var(--line)}
+.pcard:last-child{border-bottom:0}
+.pcard span{font-size:13px;color:var(--muted)}
+.pcard b{font-size:16px;font-weight:600}
+.pcard small{font-size:14px;color:var(--muted)}
+.crow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto;gap:4px 16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;align-items:baseline}
+.crow:last-child{border-bottom:0}
+.crow span{color:var(--muted);font-size:14px}
+.crow small{font-size:14px;color:var(--ink)}
+@media (max-width:560px){.crow{grid-template-columns:minmax(0,1fr)}}
+.drow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
+.drow b{display:block;font-weight:600;font-size:15.5px}
+.drow small{display:block;color:var(--muted);font-size:13.5px}
+.dicon{width:40px;height:40px;border-radius:10px;background:var(--soft);display:grid;place-items:center}
+.dact{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.icard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.icard p{margin:0;font-size:14.5px}
+.icard small{color:var(--muted);font-size:13px}
+.fh{font-size:17px;font-weight:700;margin-top:8px}
+.lst{display:flex;flex-direction:column;gap:8px}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) 34px;gap:6px;align-items:center}
+.lrow input{border:1px solid var(--faint);border-radius:8px;padding:9px 10px;font-size:15px;min-width:0;background:var(--bg)}
+@media (max-width:560px){.lrow{grid-template-columns:minmax(0,1fr) 34px}.lrow input:nth-child(1){grid-column:1}.lrow input{grid-column:1}.lrow .x{grid-row:1;grid-column:2}}
+
+/* modo painel (display físico) */
+.kiosk{display:none}
+body.painel .app,body.painel .dock{display:none}
+body.painel .kiosk{display:flex}
+body.painel{padding-block:0}
+.kiosk{min-height:100vh;flex-direction:column;gap:28px;padding-block:32px;max-width:1500px;margin:0 auto}
+.k-top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.k-top .condo{font-size:clamp(14px,1.4vw,20px);color:var(--muted);font-weight:600}
+.k-top h1{font-size:clamp(32px,4.4vw,60px);font-weight:800;letter-spacing:-.02em}
+.k-clock{text-align:right}
+.k-clock b{display:block;font-size:clamp(40px,5.5vw,84px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.k-clock span{font-size:clamp(15px,1.5vw,22px);color:var(--muted)}
+.k-cols{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;flex:1}
+.k-col{display:flex;flex-direction:column;min-width:0}
+.k-col h2{font-size:clamp(20px,1.9vw,28px);font-weight:700;padding-bottom:8px;display:flex;justify-content:space-between;align-items:baseline}
+.k-col h2 small{font-size:.7em;color:var(--muted);font-weight:500}
+.k-row{display:grid;grid-template-columns:22px minmax(0,1fr);gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.k-row .ring{margin-top:4px;width:22px;height:22px}
+.k-row .d{font-size:clamp(13px,1.1vw,16px);color:var(--muted);font-weight:600}
+.k-row .d.late{color:var(--late)}
+.k-row .tt{font-size:clamp(17px,1.5vw,23px);font-weight:600;line-height:1.25}
+.k-row .w{font-size:clamp(13px,1.05vw,16px);color:var(--muted);margin-top:4px}
+.k-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center;font-size:14px;color:var(--muted)}
+.k-foot .legend{flex-direction:row;gap:22px}
+.k-foot .legend div{display:flex;gap:8px;align-items:center}
+.live{display:inline-flex;align-items:center;gap:8px}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--prev)}
+.k-stage{flex:1;cursor:pointer;display:flex;flex-direction:column}
+.k-stage > *{flex:1}
+.k-dots{display:flex;gap:8px}
+.k-dots i{width:10px;height:10px;border-radius:50%;background:var(--line-2)}
+.k-dots i.on{background:var(--ink);width:28px;border-radius:5px}
+.k-qr{display:flex;gap:16px;align-items:center;text-align:right}
+.k-qr b{display:block;color:var(--ink);font-size:16px}
+.k-qr span{display:block}
+.k-qr .tlink{font-size:12px;color:var(--faint);font-weight:500}
+#kQR{width:108px;height:108px;overflow:hidden;flex:none}
+#kQR img,#kQR canvas{display:block;width:108px;height:108px}
+.k-ed{display:flex;gap:40px;height:100%}
+.k-tiles{flex:1.6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-content:start}
+.k-tile{border:1px solid var(--line-2);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.k-tile span{font-size:clamp(13px,1.1vw,17px);color:var(--muted);font-weight:500}
+.k-tile b{font-size:clamp(20px,2vw,32px);font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.k-tile small{font-size:clamp(13px,1.05vw,16px);color:var(--muted)}
+.k-people{flex:1;display:flex;flex-direction:column;min-width:0}
+.k-people h2{font-size:clamp(20px,1.9vw,28px);font-weight:700;padding-bottom:6px}
+.k-person{display:flex;flex-direction:column;padding:14px 0;border-bottom:1px solid var(--line)}
+.k-person span{font-size:clamp(13px,1.05vw,16px);color:var(--muted)}
+.k-person b{font-size:clamp(17px,1.5vw,23px);font-weight:600}
+.k-person b.big{font-size:clamp(28px,2.6vw,40px);font-weight:800}
+.k-person small{font-size:clamp(14px,1.15vw,18px);color:var(--ink)}
+.k-emerg{flex:.8}
+.k-infra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-content:start}
+.k-icard{border:1px solid var(--line-2);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:6px}
+.k-icard b{font-size:clamp(17px,1.5vw,23px)}
+.k-icard p{margin:0;font-size:clamp(14px,1.2vw,19px)}
+.k-icard small{font-size:clamp(13px,1.05vw,16px);color:var(--muted)}
+@media (max-width:900px){.k-ed{flex-direction:column}.k-tiles,.k-infra{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.k-cols{grid-template-columns:1fr}}
+@media (max-width:520px){.form{grid-template-columns:1fr}.sheet-b{padding-inline:20px}.grid,.dow{gap:4px}.cell{border-radius:10px;padding-top:6px}.cell .n{width:28px;height:28px;font-size:14px}}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s cubic-bezier(.2,.8,.2,1)}@keyframes up{from{transform:translateY(24px);opacity:.4}}}
+</style>
+
+<div class="app">
+  <header class="nav">
+    <div class="pill" id="monthNav">
+      <button id="prev" aria-label="Mês anterior"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button id="next" aria-label="Próximo mês"><svg class="i" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="pill">
+      <button id="vToggle" aria-label="Ver em lista" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1.5"/><path d="M4 14h16M4 18h16"/></svg></button>
+      <button id="searchBtn" aria-label="Buscar atividade"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></button>
+      <button id="addBtn" aria-label="Nova atividade" hidden><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Seções">
+    <button role="tab" data-tab="calendario" aria-selected="true">Calendário</button>
+    <button role="tab" data-tab="visao" aria-selected="false">Visão geral</button>
+    <button role="tab" data-tab="edificio" aria-selected="false">Edifício</button>
+  </div>
+
+  <div id="tab-calendario" class="tabpane">
+  <div class="head">
+    <span class="condo" id="condoName">Manutenção das áreas comuns</span>
+    <h1 id="monthTitle"></h1>
+    <p class="summary" id="summary"></p>
+  </div>
+
+  <div class="chips" id="filters">
+    <button class="chip c-preventiva" data-cat="preventiva" aria-pressed="true"><span class="dot"></span>Preventiva</button>
+    <button class="chip c-corretiva" data-cat="corretiva" aria-pressed="true"><span class="dot"></span>Corretiva</button>
+    <button class="chip c-outras" data-cat="outras" aria-pressed="true"><span class="dot"></span>Outras</button>
+  </div>
+
+  <div id="banner"></div>
+
+  <div class="main">
+    <section id="view"></section>
+    <section id="list" class="list"></section>
+  </div>
+  </div>
+  <section id="tab-visao" class="tabpane" hidden></section>
+  <section id="tab-edificio" class="tabpane" hidden></section>
+</div>
+
+<nav class="dock">
+  <div class="pill"><button id="todayBtn">Hoje</button></div>
+  <div class="pill">
+    <button id="kioskBtn" aria-label="Modo painel para display"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></svg></button>
+    <button id="menuBtn" aria-label="Ajustes"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+</nav>
+
+<div class="kiosk" id="kiosk"></div>
+<div id="overlay"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+/* ---------- catálogo: plano-modelo baseado em manuais típicos de áreas comuns ---------- */
+const PER = {
+  unica:{l:"Única (não repete)"}, semanal:{l:"Semanal",d:7}, quinzenal:{l:"Quinzenal",d:14},
+  mensal:{l:"Mensal",m:1}, bimestral:{l:"Bimestral",m:2}, trimestral:{l:"Trimestral",m:3},
+  semestral:{l:"Semestral",m:6}, anual:{l:"Anual",m:12}, bienal:{l:"A cada 2 anos",m:24},
+  trienal:{l:"A cada 3 anos",m:36}, quinquenal:{l:"A cada 5 anos",m:60}
+};
+const CAT = {preventiva:"Manutenção preventiva", corretiva:"Manutenção corretiva", outras:"Outras"};
+const CAT_DESC = {
+  preventiva:"Programada pelo manual para evitar falhas e preservar o desempenho.",
+  corretiva:"Reparo de falha ou anomalia já identificada.",
+  outras:"Inspeções, laudos, controle sanitário e obrigações legais ligadas às áreas comuns."
+};
+const SISTEMAS = ["Reservatórios e água potável","Instalações hidrossanitárias","Combate a incêndio","SPDA (para-raios)","Elevadores","Bombas e motores","Gerador","Portões e acessos","Cobertura e impermeabilização","Fachada e revestimentos","Instalações elétricas","Lazer e playground","Piscina","Jardins e áreas externas","Estrutura","Esquadrias e vidros","Pisos e garagem","Gestão do condomínio"];
+
+const TEMPLATE = [
+ {k:"res-limpeza",s:"Reservatórios e água potável",t:"Limpeza e desinfecção dos reservatórios",c:"preventiva",p:"semestral",r:"Empresa especializada",ref:"NBR 5674 · NBR 5626 · Portaria GM/MS 888/2021",
+  como:"Fechar o registro de entrada e esvaziar o reservatório.\nEscovar paredes e fundo sem produtos abrasivos.\nDesinfetar com solução clorada, aguardar o tempo de contato e enxaguar.\nConferir tampas, extravasor e telas.\nSolicitar o laudo de potabilidade e o certificado do serviço.",
+  pq:"Água de reservatório sem limpeza acumula sedimentos e microrganismos que chegam a todas as unidades. A limpeza semestral é exigência sanitária e item obrigatório do manual."},
+ {k:"ext-insp",s:"Combate a incêndio",t:"Inspeção visual dos extintores",c:"preventiva",p:"mensal",r:"Zelador / equipe local",ref:"NBR 12962",
+  como:"Verificar lacre, pino e manômetro na faixa verde.\nConferir data de validade da carga e do teste hidrostático.\nConfirmar sinalização e acesso desobstruído.\nRegistrar extintores com problema.",
+  pq:"Um extintor despressurizado ou bloqueado falha na emergência. A inspeção mensal também sustenta a regularidade junto ao Corpo de Bombeiros."},
+ {k:"ext-recarga",s:"Combate a incêndio",t:"Recarga e manutenção dos extintores",c:"preventiva",p:"anual",r:"Empresa certificada INMETRO",ref:"NBR 12962",
+  como:"Enviar à empresa certificada, com substituição temporária.\nConferir selo INMETRO e etiqueta com a próxima data.\nGuardar as notas e certificados.",
+  pq:"O agente extintor perde eficácia com o tempo. A recarga anual é exigida para manter o certificado do Corpo de Bombeiros e a cobertura do seguro."},
+ {k:"mang",s:"Combate a incêndio",t:"Inspeção e ensaio hidrostático das mangueiras",c:"preventiva",p:"anual",r:"Empresa especializada",ref:"NBR 12779",
+  como:"Desenrolar e inspecionar as mangueiras, uniões e esguichos.\nRealizar o ensaio hidrostático.\nAcondicionar corretamente nos abrigos.",
+  pq:"Mangueiras ressecadas ou com uniões danificadas rompem sob pressão no momento do uso."},
+ {k:"ilum",s:"Combate a incêndio",t:"Teste da iluminação de emergência",c:"preventiva",p:"mensal",r:"Zelador / equipe local",ref:"NBR 10898",
+  como:"Desligar o circuito correspondente.\nConferir se todas as luminárias acendem.\nVerificar a autonomia mínima indicada no manual.\nSubstituir baterias e lâmpadas com falha.",
+  pq:"Sem iluminação de emergência, a evacuação de escadas e garagens fica comprometida em uma queda de energia ou incêndio."},
+ {k:"avcb",s:"Gestão do condomínio",t:"Renovação do certificado do Corpo de Bombeiros",c:"outras",p:"anual",r:"Síndico",ref:"Legislação estadual de prevenção contra incêndio",
+  como:"Conferir a validade do certificado atual.\nReunir laudos e notas de extintores, mangueiras, iluminação e SPDA.\nProtocolar a vistoria com antecedência.",
+  pq:"Sem o certificado em dia o condomínio fica irregular, sujeito a multa e com risco na cobertura do seguro."},
+ {k:"spda",s:"SPDA (para-raios)",t:"Inspeção e medição do SPDA",c:"preventiva",p:"anual",r:"Engenheiro eletricista / empresa especializada",ref:"NBR 5419",
+  como:"Inspecionar captores, descidas e conexões.\nMedir continuidade e resistência de aterramento.\nEmitir laudo com ART.",
+  pq:"Conexões corroídas tornam o para-raios ineficaz e expõem a edificação e os equipamentos a descargas atmosféricas."},
+ {k:"elev",s:"Elevadores",t:"Manutenção preventiva dos elevadores",c:"preventiva",p:"mensal",r:"Empresa conservadora habilitada",ref:"NBR 16083 · contrato de conservação",
+  como:"Acompanhar a visita mensal da conservadora.\nConferir o relatório da visita e itens pendentes.\nVerificar o funcionamento do alarme e do interfone da cabina.",
+  pq:"A manutenção mensal por empresa habilitada é obrigatória e evita paradas, aprisionamentos e acidentes."},
+ {k:"bombas",s:"Bombas e motores",t:"Verificação e alternância das bombas de recalque",c:"preventiva",p:"mensal",r:"Zelador / equipe local",ref:"NBR 5674 · manual do fabricante",
+  como:"Verificar ruídos, vibração e vazamentos no selo.\nAlternar a bomba principal e a reserva.\nTestar o acionamento automático pelas boias.",
+  pq:"Bomba parada por muito tempo trava; bomba sobrecarregada queima. Alternar mantém as duas prontas e evita falta de água."},
+ {k:"gerador",s:"Gerador",t:"Teste do gerador em carga",c:"preventiva",p:"mensal",r:"Zelador / empresa especializada",ref:"Manual do fabricante",
+  como:"Simular falta de energia e verificar a partida automática.\nConferir combustível, óleo, bateria e água do radiador.\nRegistrar horas de funcionamento.",
+  pq:"O gerador alimenta elevadores, bombas e iluminação de emergência. Sem teste periódico, ele pode falhar justamente quando faltar energia."},
+ {k:"portao",s:"Portões e acessos",t:"Lubrificação e regulagem dos portões automáticos",c:"preventiva",p:"trimestral",r:"Empresa especializada",ref:"Manual do fabricante",
+  como:"Lubrificar trilhos, roldanas e cremalheira.\nRegular fins de curso e sensores antiesmagamento.\nVerificar fixações e o motor.",
+  pq:"Portões desregulados travam, forçam o motor e podem atingir pessoas ou veículos se o sensor falhar."},
+ {k:"cobertura",s:"Cobertura e impermeabilização",t:"Inspeção da impermeabilização, rufos e juntas",c:"preventiva",p:"anual",r:"Empresa especializada / engenheiro",ref:"NBR 9575 · NBR 5674",
+  como:"Inspecionar mantas, proteção mecânica, rufos e juntas de dilatação.\nVerificar ralos e caimentos.\nRegistrar fissuras e pontos de empoçamento com fotos.",
+  pq:"Infiltração é a manifestação patológica mais comum em condomínios. Detectar cedo evita danos à estrutura e reparos muito mais caros."},
+ {k:"calhas",s:"Cobertura e impermeabilização",t:"Limpeza de calhas, ralos e condutores pluviais",c:"preventiva",p:"trimestral",r:"Zelador / equipe local",ref:"NBR 10844 · NBR 5674",
+  como:"Retirar folhas e detritos de calhas e ralos.\nTestar o escoamento com água.\nVerificar fixações e emendas.",
+  pq:"Calha entupida transborda para dentro de lajes e paredes. Fazer antes do período de chuvas evita infiltrações."},
+ {k:"gordura",s:"Instalações hidrossanitárias",t:"Limpeza das caixas de gordura e de inspeção",c:"preventiva",p:"trimestral",r:"Empresa especializada",ref:"NBR 8160 · NBR 5674",
+  como:"Remover a gordura e os resíduos acumulados.\nVerificar tampas e vedação.\nDestinar os resíduos corretamente.",
+  pq:"Caixas saturadas causam entupimentos, refluxo de esgoto e mau cheiro nas áreas comuns."},
+ {k:"fachada",s:"Fachada e revestimentos",t:"Inspeção do revestimento e dos selantes da fachada",c:"preventiva",p:"anual",r:"Engenheiro / empresa especializada",ref:"NBR 13755 · NBR 5674",
+  como:"Inspecionar placas cerâmicas, rejuntes e juntas de movimentação.\nRealizar teste de percussão nas áreas suspeitas.\nRegistrar fissuras e descolamentos com fotos.",
+  pq:"Placas que se soltam da fachada representam risco à vida de quem circula embaixo e indicam infiltração no sistema."},
+ {k:"eletrica",s:"Instalações elétricas",t:"Reaperto e termografia dos quadros elétricos",c:"preventiva",p:"anual",r:"Eletricista habilitado",ref:"NBR 5410 · NR-10",
+  como:"Desenergizar com procedimento seguro.\nReapertar conexões dos quadros gerais e de distribuição.\nRealizar termografia para identificar pontos quentes.\nTestar disjuntores e DR.",
+  pq:"Conexões frouxas aquecem e são causa frequente de incêndio de origem elétrica."},
+ {k:"play",s:"Lazer e playground",t:"Inspeção de segurança do playground",c:"preventiva",p:"mensal",r:"Zelador / equipe local",ref:"NBR 16071",
+  como:"Verificar fixações, parafusos expostos, correntes e assentos.\nConferir piso de amortecimento.\nInterditar brinquedos danificados.",
+  pq:"Brinquedos com peças soltas ou cantos expostos causam acidentes com crianças."},
+ {k:"piscina",s:"Piscina",t:"Tratamento e análise da água da piscina",c:"preventiva",p:"semanal",r:"Piscineiro",ref:"Normas sanitárias locais",
+  como:"Medir pH e cloro.\nAspirar, escovar e limpar o filtro.\nRegistrar os parâmetros medidos.",
+  pq:"Água fora dos parâmetros causa irritações e doenças de pele e pode levar à interdição da piscina."},
+ {k:"jardim",s:"Jardins e áreas externas",t:"Poda, adubação e verificação da irrigação",c:"preventiva",p:"trimestral",r:"Jardineiro",ref:"Manual do proprietário",
+  como:"Podar árvores e arbustos próximos a fachadas e calhas.\nAdubar e repor forração.\nVerificar a irrigação e a drenagem dos canteiros.",
+  pq:"Raízes e galhos sem controle danificam pisos, impermeabilização e calhas."},
+ {k:"dedet",s:"Gestão do condomínio",t:"Dedetização e desratização das áreas comuns",c:"outras",p:"semestral",r:"Empresa licenciada",ref:"Vigilância sanitária",
+  como:"Agendar com empresa licenciada e avisar os moradores.\nTratar garagens, casa de lixo, poços e shafts.\nGuardar o certificado com os produtos aplicados.",
+  pq:"O controle de pragas é exigência sanitária e evita contaminação nas áreas de lixo e de convivência."},
+ {k:"plano",s:"Gestão do condomínio",t:"Revisão do plano de manutenção",c:"outras",p:"anual",r:"Síndico",ref:"NBR 5674",
+  como:"Comparar o que foi previsto com o que foi realizado.\nAtualizar prazos, custos e fornecedores.\nApresentar o plano revisado na assembleia.",
+  pq:"A NBR 5674 exige que o programa de manutenção seja revisado e documentado. Isso orienta a previsão orçamentária do ano seguinte."},
+ {k:"inspecao",s:"Gestão do condomínio",t:"Inspeção predial com laudo técnico",c:"outras",p:"quinquenal",r:"Engenheiro civil / arquiteto",ref:"NBR 16747",
+  como:"Contratar profissional habilitado com ART/RRT.\nDisponibilizar manuais, projetos e registros de manutenção.\nPriorizar as recomendações do laudo no plano.",
+  pq:"O laudo de inspeção predial classifica as anomalias por grau de risco e indica as correções antes que virem problemas graves."}
+];
+
+/* ---------- utilitários ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s||""); return m ? new Date(+m[1], +m[2]-1, +m[3], 12) : null; };
+const addDays = (d,n) => { const t = new Date(d); t.setDate(t.getDate()+n); return t; };
+const addMonths = (d,n) => { const y=d.getFullYear(), m=d.getMonth()+n, last=new Date(y,m+1,0).getDate(); return new Date(y,m,Math.min(d.getDate(),last),12); };
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const DIAS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const fmtD = s => { const d = parse(s); return d ? `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}` : "—"; };
+const fmtDShort = s => { const d = parse(s); return d ? `${DIAS[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}` : ""; };
+const brl = v => (typeof v === "number" && isFinite(v)) ? v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}) : "";
+const todayD = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12); };
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
+
+/* ---------- estado ---------- */
+const S = {
+  db:null, user:null, me:null, myId:null, isOwner:false, canWrite:null, writeRefused:false,
+  atividades:new Map(), registros:[], equipe:[], nome:"", loaded:{a:false,r:false},
+  cursor: (() => { const t = todayD(); return new Date(t.getFullYear(), t.getMonth(), 1, 12); })(),
+  sel: ymd(todayD()), view: lsGet("cal.view") === "agenda" ? "agenda" : "mes",
+  cats: new Set(["preventiva","corretiva","outras"]), open:null, names:{},
+  tab: ["calendario","visao","edificio"].includes(lsGet("cal.tab")) ? lsGet("cal.tab") : "calendario", ed:{}, assets:null, delDoc:null
+};
+const podeEditar = () => !!S.db && !S.writeRefused && S.canWrite !== false && (S.isOwner || (S.myId && S.equipe.includes(S.myId)));
+
+function occurrences(a, from, to){
+  const s = parse(a.data); if (!s) return [];
+  const p = PER[a.periodicidade] || PER.unica, out = [];
+  if (p.d){
+    let t = new Date(s);
+    if (t < from){ const n = Math.floor(Math.round((from - t)/864e5) / p.d); t = addDays(t, n*p.d); }
+    while (t <= to){ if (t >= from) out.push(ymd(t)); t = addDays(t, p.d); }
+  } else if (p.m){
+    for (let k = 0; k < 3000; k++){ const t = addMonths(s, k*p.m); if (t > to) break; if (t >= from) out.push(ymd(t)); }
+  } else if (s >= from && s <= to) out.push(ymd(s));
+  return out;
+}
+function regsFor(id, oc){ return S.registros.filter(r => r.atividadeId === id && (!oc || r.ocorrencia === oc)); }
+function done(id, oc){ return S.registros.some(r => r.atividadeId === id && r.ocorrencia === oc && r.concluida); }
+function status(id, oc){
+  if (done(id, oc)) return "done";
+  const t = ymd(todayD());
+  return oc < t ? "late" : oc === t ? "today" : "next";
+}
+const STATUS_L = {done:"Concluída", late:"Atrasada", today:"Hoje", next:"Prevista"};
+
+function eventsBetween(from, to, ignoreFilter){
+  const out = [];
+  for (const a of S.atividades.values()){
+    if (!ignoreFilter && !S.cats.has(a.categoria)) continue;
+    for (const oc of occurrences(a, from, to)) out.push({a, oc, st: status(a.id, oc)});
+  }
+  return out.sort((x,y) => x.oc.localeCompare(y.oc) || x.a.titulo.localeCompare(y.a.titulo));
+}
+function lateList(ignoreFilter){
+  const t = todayD();
+  return eventsBetween(addDays(t,-180), addDays(t,-1), ignoreFilter).filter(e => e.st === "late");
+}
+function nextOcc(a, after){
+  const list = occurrences(a, after, addMonths(after, 61));
+  return list[0];
+}
+
+/* ---------- renderização ---------- */
+const CAT_SHORT = {preventiva:"Preventiva", corretiva:"Corretiva", outras:"Outras"};
+const DIAS_LONG = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const longDay = k => { const d = parse(k); return d ? `${cap(DIAS_LONG[d.getDay()])}, ${d.getDate()} de ${MESES[d.getMonth()]}` : ""; };
+const shortDay = k => { const d = parse(k); return d ? `${pad(d.getDate())} ${MESES[d.getMonth()].slice(0,3)}` : ""; };
+const monthRange = () => { const m = S.cursor; return [new Date(m.getFullYear(), m.getMonth(), 1, 12), new Date(m.getFullYear(), m.getMonth()+1, 0, 12)]; };
+
+function renderHeader(){
+  $("#condoName").textContent = S.nome || "Manutenção das áreas comuns";
+  const m = S.cursor;
+  $("#monthTitle").innerHTML = `${cap(MESES[m.getMonth()])} <span>${m.getFullYear()}</span>`;
+  const [from, to] = monthRange(), ev = eventsBetween(from, to);
+  const feitas = ev.filter(e => e.st === "done").length, late = lateList().length;
+  const ano = m.getFullYear();
+  const custo = S.registros.filter(r => (r.dataExecucao || r.ocorrencia || "").startsWith(String(ano)) && S.cats.has(S.atividades.get(r.atividadeId)?.categoria))
+    .reduce((s,r) => s + (typeof r.custo === "number" ? r.custo : 0), 0);
+  $("#summary").innerHTML = S.db && S.atividades.size
+    ? `<b>${ev.length}</b> previstas · <b>${feitas}</b> concluídas · <span class="${late ? "late" : ""}"><b>${late}</b> atrasada${late === 1 ? "" : "s"}</span> · <b>${brl(custo) || "R$ 0,00"}</b> gastos em ${ano}`
+    : "Somente itens do Manual de Uso, Operação e Manutenção das áreas comuns.";
+  const v = $("#vToggle");
+  v.setAttribute("aria-pressed", S.view === "agenda");
+  v.setAttribute("aria-label", S.view === "agenda" ? "Ver em grade" : "Ver em lista");
+  document.querySelectorAll("#filters .chip").forEach(b => b.setAttribute("aria-pressed", S.cats.has(b.dataset.cat)));
+  $("#addBtn").hidden = !podeEditar();
+}
+
+function renderBanner(){
+  const b = $("#banner");
+  if (!S.db){
+    b.innerHTML = `<div class="notice"><b>Calendário sem conexão.</b> Entre com uma conta que tenha acesso a este calendário para ver e registrar as atividades.</div>`;
+  } else if (S.loaded.a && S.atividades.size === 0){
+    b.innerHTML = `<div class="notice"><b>Nenhuma atividade cadastrada.</b> ${podeEditar()
+      ? `<button data-go="import">Importe o plano-modelo</button> e mantenha só o que consta no manual do seu condomínio, ou cadastre cada item em <button data-go="add">Nova atividade</button>.`
+      : "Quando o síndico ou uma pessoa autorizada cadastrar as atividades do manual, elas aparecem aqui."}</div>`;
+  } else b.innerHTML = "";
+}
+
+function rowHTML(e, right){
+  const a = e.a, isDone = e.st === "done";
+  const r = right === "date" ? (e.st === "late" ? `<span class="rr late">${shortDay(e.oc)}</span>` : `<span class="rr">${shortDay(e.oc)}</span>`)
+    : `<span class="rr ${e.st === "late" ? "late" : e.st === "today" ? "today" : ""}">${e.st === "next" ? CAT_SHORT[a.categoria] : STATUS_L[e.st]}</span>`;
+  return `<button class="row c-${a.categoria} ${isDone ? "done" : ""}" data-open="${esc(a.id)}" data-oc="${e.oc}">
+    <span class="ring ${isDone ? "on" : ""}"></span>
+    <span style="min-width:0"><span class="rt">${esc(a.titulo)}</span><span class="rs" style="display:block">${esc(a.sistema || CAT[a.categoria])} · ${esc(PER[a.periodicidade]?.l || "")}</span></span>
+    ${r}</button>`;
+}
+
+function renderMonth(){
+  const m = S.cursor, [first, last] = monthRange();
+  const ev = eventsBetween(first, last), by = {};
+  ev.forEach(e => (by[e.oc] = by[e.oc] || []).push(e));
+  const t = ymd(todayD());
+  let html = `<div class="dow">${["D","S","T","Q","Q","S","S"].map(d => `<div>${d}</div>`).join("")}</div><div class="grid">`;
+  for (let i = 0; i < first.getDay(); i++) html += `<div class="cell blank"></div>`;
+  for (let d = new Date(first); d <= last; d = addDays(d,1)){
+    const k = ymd(d), list = by[k] || [];
+    const cls = ["cell", k < t && "past", k === t && "today", k === S.sel && "sel"].filter(Boolean).join(" ");
+    html += `<button class="${cls}" data-day="${k}" aria-label="${d.getDate()} de ${MESES[d.getMonth()]}, ${list.length} atividade${list.length === 1 ? "" : "s"}">
+      ${list.some(e => e.st === "late") ? `<span class="flag"></span>` : ""}
+      <span class="n">${d.getDate()}</span>
+      <span class="marks">${list.slice(0,4).map(e => `<i class="c-${e.a.categoria} ${e.st === "done" ? "done" : ""}"></i>`).join("")}</span>
+      <span class="labels">${list.slice(0,2).map(e => `<span class="c-${e.a.categoria} ${e.st === "done" ? "done" : ""}">${esc(e.a.titulo)}</span>`).join("")}${list.length > 2 ? `<em>+${list.length-2}</em>` : ""}</span>
+    </button>`;
+  }
+  $("#view").innerHTML = html + "</div>";
+}
+
+function renderAgenda(){
+  const [from, to] = monthRange(), ev = eventsBetween(from, to), by = {};
+  ev.forEach(e => (by[e.oc] = by[e.oc] || []).push(e));
+  const days = Object.keys(by).sort(), t = ymd(todayD());
+  $("#view").innerHTML = days.length
+    ? days.map(k => `<div class="daygroup"><h4 class="${k === t ? "is-today" : ""}">${longDay(k)}</h4>${by[k].map(e => rowHTML(e)).join("")}</div>`).join("")
+    : `<p class="empty">Nenhuma atividade prevista em ${MESES[S.cursor.getMonth()]}.</p>`;
+}
+
+function renderList(){
+  const sd = parse(S.sel), t = todayD();
+  const daily = sd ? eventsBetween(sd, sd) : [];
+  const late = lateList();
+  const prox = eventsBetween(addDays(t,1), addDays(t,30)).filter(e => e.st !== "done").slice(0,8);
+  const daySec = S.view === "agenda" ? "" : `<div class="sec"><h3>${longDay(S.sel)}</h3>
+      ${daily.length ? daily.map(e => rowHTML(e)).join("") : `<p class="empty">Nada previsto neste dia.</p>`}
+      ${podeEditar() && sd ? `<button class="link" data-new="${S.sel}">Adicionar atividade neste dia</button>` : ""}</div>`;
+  $("#list").innerHTML = `${daySec}
+    ${late.length ? `<div class="sec"><h3>Atrasadas</h3><p class="sub">Previstas nos últimos 6 meses e ainda sem registro de conclusão.</p>${late.slice(0,8).map(e => rowHTML(e,"date")).join("")}${late.length > 8 ? `<p class="empty">e mais ${late.length-8}.</p>` : ""}</div>` : ""}
+    <div class="sec"><h3>Próximos 30 dias</h3>${prox.length ? prox.map(e => rowHTML(e,"date")).join("") : `<p class="empty">Nada previsto.</p>`}</div>`;
+}
+
+function render(){
+  renderTabs(); renderHeader();
+  if (S.tab === "calendario"){ renderBanner(); S.view === "agenda" ? renderAgenda() : renderMonth(); renderList(); }
+  else if (S.tab === "visao") renderVisao();
+  else renderEdificio();
+  renderKiosk();
+  if (S.open?.type === "detail") renderDetail();
+}
+
+/* ---------- folhas ---------- */
+function openSheet(type, data){ S.open = {type, ...data}; drawSheet(); }
+function closeSheet(){ S.open = null; $("#overlay").innerHTML = ""; }
+function drawSheet(){
+  if (!S.open) return;
+  ({detail:renderDetail, form:renderForm, import:renderImport, team:renderTeam, config:renderConfig, menu:renderMenu, search:renderSearch, edificio:renderEdForm, doc:renderDocForm})[S.open.type]();
+}
+function shell(title, body){
+  const prevScroll = $("#overlay .sheet")?.scrollTop || 0, same = $("#overlay .sheet")?.dataset.key === S.open?.type;
+  $("#overlay").innerHTML = `<div class="ov" data-close><div class="sheet" data-key="${esc(S.open?.type)}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="sheet-h"><button class="x" data-x aria-label="Fechar"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2>${esc(title)}</h2><span></span></div>
+    <div class="sheet-b">${body}</div></div></div>`;
+  if (same) $("#overlay .sheet").scrollTop = prevScroll;
+}
+
+async function names(ids){
+  ids = [...new Set(ids.filter(Boolean))];
+  if (!S.user || !ids.length) return {};
+  try { return await S.user.profiles(ids); } catch { return {}; }
+}
+
+function stepsHTML(txt){
+  const lines = String(txt || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return `<p>—</p>`;
+  return lines.length === 1 ? `<p>${esc(lines[0])}</p>` : `<ol>${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ol>`;
+}
+
+async function renderDetail(){
+  const {id} = S.open; const a = S.atividades.get(id);
+  if (!a){ shell("Atividade", `<p>Esta atividade não existe mais.</p>`); return; }
+  const t = todayD();
+  const oc = S.open.oc || nextOcc(a, t) || a.data;
+  const st = status(a.id, oc);
+  const regs = regsFor(a.id).sort((x,y) => (y.ocorrencia||"").localeCompare(x.ocorrencia||"") || (y.criadoEm||0)-(x.criadoEm||0));
+  const total = regs.reduce((s,r) => s + (typeof r.custo === "number" ? r.custo : 0), 0);
+  const ps = await names(regs.map(r => r.autor));
+  if (S.open?.type !== "detail" || S.open.id !== id) return;
+  const prox = occurrences(a, t, addMonths(t, 61)).slice(0,3);
+  const ocOpts = [...new Set([...occurrences(a, addMonths(t,-12), addDays(t,-1)).slice(-6), ...prox, oc])].sort();
+  const ed = podeEditar();
+  const keep = id === S.lastDetailId ? collectNoteDraft() : null;
+  S.lastDetailId = id;
+
+  const notes = regs.map(r => `<div class="note">
+      <div class="nh"><span>Ocorrência de <b class="num">${fmtD(r.ocorrencia)}</b>${r.concluida ? ` · <span class="ok">Concluída</span>` : ""}</span>
+      <span>${esc(ps[r.autor]?.name || "Alguém")}${r.criadoEm ? " · " + new Date(r.criadoEm).toLocaleDateString("pt-BR") : ""}</span></div>
+      ${(r.executor || typeof r.custo === "number" || r.dataExecucao) ? `<div class="kv">
+        ${r.executor ? `<div><span>Executado por</span> ${esc(r.executor)}</div>` : ""}
+        ${typeof r.custo === "number" ? `<div><span>Custo</span> <b class="num">${brl(r.custo)}</b></div>` : ""}
+        ${r.dataExecucao ? `<div><span>Data</span> <span class="num" style="color:var(--ink)">${fmtD(r.dataExecucao)}</span></div>` : ""}</div>` : ""}
+      ${r.texto ? `<p>${esc(r.texto)}</p>` : ""}
+      ${ed && (S.isOwner || r.autor === S.myId) ? `<button class="del" style="align-self:flex-start" data-delreg="${esc(r.id)}">Excluir anotação</button>` : ""}
+    </div>`).join("");
+
+  const form = ed ? `<form class="form" id="noteForm">
+      <label class="fld"><span>Ocorrência</span><select id="nOc">${ocOpts.map(o => `<option value="${esc(o)}" ${o===oc?"selected":""}>${fmtD(o)}</option>`).join("")}</select></label>
+      <label class="fld"><span>Data da execução</span><input type="date" id="nData" value="${ymd(t)}"></label>
+      <label class="fld"><span>Executado por</span><input id="nExec" placeholder="Pessoa ou empresa" maxlength="120"></label>
+      <label class="fld"><span>Custo (R$)</span><input id="nCusto" inputmode="decimal" placeholder="0,00"></label>
+      <label class="fld full"><span>Anotações</span><textarea id="nTexto" placeholder="Nota fiscal, garantia, materiais, anomalias encontradas, próximos passos" maxlength="4000"></textarea></label>
+      <label class="check full"><input type="checkbox" id="nDone" checked> Marcar esta ocorrência como concluída</label>
+      <div class="actions full"><span class="err" id="nErr"></span><button class="btn" type="submit">Salvar anotação</button></div>
+    </form>` : "";
+
+  const stTxt = st === "late" ? `<b class="late">Atrasada</b>` : `<b>${STATUS_L[st]}</b>`;
+  shell(CAT[a.categoria], `
+    <div>
+      <div class="d-cat c-${a.categoria}"><span class="dot"></span>${esc(a.sistema || CAT[a.categoria])}</div>
+      <h2 class="d-title">${esc(a.titulo)}</h2>
+      <p class="d-status">${stTxt} · ${longDay(oc)} de ${oc.slice(0,4)}</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><span>Periodicidade</span><b>${esc(PER[a.periodicidade]?.l || "—")}</b></div>
+      <div class="fact"><span>Próximas datas</span><b class="num">${prox.length ? prox.map(fmtD).join(" · ") : "—"}</b></div>
+      <div class="fact"><span>Quem executa</span><b>${esc(a.responsavel || "—")}</b></div>
+      <div class="fact"><span>Item do manual</span><b>${a.manual ? esc(a.manual) : `<span class="warn">Não informado</span>`}</b></div>
+      ${a.referencia ? `<div class="fact"><span>Normas</span><b>${esc(a.referencia)}</b></div>` : ""}
+    </div>
+    <div class="hr"></div>
+    <div class="blk"><h3>Por que fazer</h3><p>${esc(a.porque || "—")}</p></div>
+    <div class="blk"><h3>Como fazer</h3>${stepsHTML(a.como)}</div>
+    <div class="hr"></div>
+    <div class="blk"><h3>Bloco de notas</h3>
+      <p class="notes-sum">${regs.length ? `${regs.length} registro${regs.length===1?"":"s"} · total <b class="num" style="color:var(--ink)">${brl(total) || "R$ 0,00"}</b>` : "Registre quem executou, quanto custou, notas fiscais, garantias e observações do serviço."}</p>
+      ${notes}${form}
+    </div>
+    ${ed ? `<div class="hr"></div><div class="actions" id="actRow"><button class="tlink" data-edit="${esc(a.id)}">Editar atividade</button><button class="tlink red" data-delask>Excluir atividade</button></div>` : ""}
+  `);
+  if (keep) restoreNoteDraft(keep);
+}
+function collectNoteDraft(){
+  if (!$("#noteForm")) return null;
+  return {e:$("#nExec").value, c:$("#nCusto").value, t:$("#nTexto").value, d:$("#nData").value, done:$("#nDone").checked, oc:$("#nOc").value};
+}
+function restoreNoteDraft(k){
+  if (!$("#noteForm")) return;
+  $("#nExec").value = k.e; $("#nCusto").value = k.c; $("#nTexto").value = k.t; $("#nData").value = k.d; $("#nDone").checked = k.done;
+  if ([...$("#nOc").options].some(o => o.value === k.oc)) $("#nOc").value = k.oc;
+}
+
+function renderForm(){
+  const a = S.open.id ? S.atividades.get(S.open.id) : null;
+  const v = a || {categoria:"preventiva", periodicidade:"mensal", data:S.open.date || ymd(todayD())};
+  shell(a ? "Editar atividade" : "Nova atividade", `
+    <form id="aForm" class="form">
+      <label class="fld full"><span>Atividade</span><input id="fTitulo" required maxlength="140" value="${esc(v.titulo)}" placeholder="Ex.: Limpeza dos reservatórios"></label>
+      <label class="fld"><span>Área ou sistema</span><input id="fSistema" list="sistemas" maxlength="80" value="${esc(v.sistema)}" placeholder="Escolha ou digite"></label>
+      <label class="fld"><span>Classificação</span><select id="fCat">${Object.keys(CAT).map(c => `<option value="${c}" ${v.categoria===c?"selected":""}>${CAT[c]}</option>`).join("")}</select></label>
+      <label class="fld"><span>${a ? "Data de referência" : "Primeira data"}</span><input type="date" id="fData" required value="${esc(v.data)}"></label>
+      <label class="fld"><span>Periodicidade</span><select id="fPer">${Object.keys(PER).map(p => `<option value="${p}" ${v.periodicidade===p?"selected":""}>${PER[p].l}</option>`).join("")}</select></label>
+      <label class="fld full"><span>Por que fazer</span><textarea id="fPorque" required maxlength="1500" placeholder="Qual risco ou dano esta atividade evita?">${esc(v.porque)}</textarea></label>
+      <label class="fld full"><span>Como fazer (um passo por linha)</span><textarea id="fComo" maxlength="4000" placeholder="Passo a passo conforme o manual">${esc(v.como)}</textarea></label>
+      <label class="fld"><span>Quem executa</span><input id="fResp" maxlength="120" value="${esc(v.responsavel)}" placeholder="Zelador, empresa especializada"></label>
+      <label class="fld"><span>Item do manual</span><input id="fManual" maxlength="120" value="${esc(v.manual)}" placeholder="Ex.: seção 6.2, pág. 34"></label>
+      <label class="fld full"><span>Normas e referências</span><input id="fRef" maxlength="200" value="${esc(v.referencia)}" placeholder="Ex.: NBR 5674"></label>
+      <p class="hint full">O item do manual mantém o calendário restrito ao que consta no manual das áreas comuns.</p>
+      <datalist id="sistemas">${SISTEMAS.map(s => `<option value="${esc(s)}">`).join("")}</datalist>
+      <div class="actions full"><button type="button" class="tlink" data-x>Cancelar</button><span class="err" id="fErr"></span><button class="btn" type="submit">${a ? "Salvar alterações" : "Adicionar ao calendário"}</button></div>
+    </form>`);
+}
+
+function renderImport(){
+  const existing = new Set([...S.atividades.values()].map(a => a.modelo).filter(Boolean));
+  const groups = {};
+  TEMPLATE.forEach(x => (groups[x.s] = groups[x.s] || []).push(x));
+  const n = new Date(todayD().getFullYear(), todayD().getMonth()+1, 1, 12);
+  shell("Importar plano-modelo", `
+    <p style="margin:0;font-size:16px">Itens típicos de manuais de áreas comuns, já com como fazer, por que fazer e normas. Marque somente o que consta no manual do seu condomínio e, depois, informe o item do manual em cada atividade.</p>
+    <label class="fld" style="max-width:260px"><span>Primeira data das atividades</span><input type="date" id="iData" value="${ymd(n)}"></label>
+    ${Object.entries(groups).map(([g, list]) => `<div class="tpl-group"><h4>${esc(g)}</h4>
+      ${list.map(x => `<label class="tpl c-${x.c}"><input type="checkbox" data-k="${x.k}" ${existing.has(x.k) ? "disabled" : "checked"}>
+        <span>${esc(x.t)} <span class="per">· ${PER[x.p].l}</span><span class="m">${existing.has(x.k) ? "Já está no calendário" : esc(x.pq)}</span></span></label>`).join("")}</div>`).join("")}
+    <div class="actions"><button class="tlink" data-x>Cancelar</button><span class="err" id="iErr"></span><button class="btn" id="doImport">Importar selecionadas</button></div>`);
+}
+
+async function renderTeam(){
+  const ps = await names(S.equipe);
+  if (S.open?.type !== "team") return;
+  const own = S.isOwner;
+  shell("Pessoas autorizadas", `
+    <p style="margin:0;font-size:16px">O síndico escolhe quem pode incluir e editar atividades e registrar anotações. As demais pessoas apenas consultam.</p>
+    <div class="notice">Para salvar, a pessoa autorizada também precisa de acesso de <b>Colaborador</b> ou superior no botão Compartilhar deste calendário. Quem só consulta pode ficar como Leitor.</div>
+    <div>${S.equipe.length ? S.equipe.map(id => `<div class="person"><img alt="" src="${esc(ps[id]?.avatarUrl || "")}"><div class="n">${esc(ps[id]?.name || "Pessoa sem nome visível")}</div>${own ? `<button class="tlink" data-rm="${esc(id)}">Remover</button>` : ""}</div>`).join("") : `<p class="empty">Por enquanto, apenas o síndico edita.</p>`}</div>
+    ${own ? `<label class="fld"><span>Adicionar pessoa</span><input id="tSearch" autocomplete="off" placeholder="Digite o nome ou e-mail"></label><div class="results" id="tResults" hidden></div><span class="err" id="tErr"></span>` : ""}`);
+}
+
+function renderConfig(){
+  shell("Nome do condomínio", `<form id="cForm" class="form">
+    <label class="fld full"><span>Nome exibido no calendário e no painel</span><input id="cNome" maxlength="80" value="${esc(S.nome)}" placeholder="Ex.: Residencial Jardim das Araucárias"></label>
+    <div class="actions full"><button type="button" class="tlink" data-x>Cancelar</button><span class="err" id="cErr"></span><button class="btn">Salvar</button></div></form>`);
+}
+
+function renderMenu(){
+  const ed = podeEditar();
+  const role = S.isOwner ? "Síndico" : ed ? "Pessoa autorizada" : "Consulta";
+  shell("Ajustes", `
+    ${S.me ? `<div class="me"><img alt="" src="${esc(S.me.avatarUrl)}"><div><b>${esc(S.me.name || "Você")}</b><small>${role}</small></div></div>` : ""}
+    <div class="menu">
+      ${ed ? `<button data-go="import"><span>Importar plano-modelo<small>Itens típicos do manual das áreas comuns, com base na NBR 5674</small></span>›</button>` : ""}
+      <button data-go="team"><span>Pessoas autorizadas<small>Quem pode incluir atividades e anotar</small></span>›</button>
+      ${S.isOwner ? `<button data-go="config"><span>Nome do condomínio<small>${esc(S.nome || "Não definido")}</small></span>›</button>` : ""}
+      ${S.isOwner ? `<button data-go="edificio-edit"><span>Informações do edifício<small>Ficha técnica, gestão, fornecedores e infraestrutura</small></span>›</button>` : ""}
+      <button data-go="kiosk"><span>Modo painel<small>Tela cheia para o display da área comum</small></span>›</button>
+    </div>
+    <div class="blk"><h3>Classificação</h3><div class="legend">
+      ${Object.keys(CAT).map(c => `<div class="c-${c}"><span class="dot"></span><span><b>${CAT[c]}.</b> ${CAT_DESC[c]}</span></div>`).join("")}
+    </div></div>`);
+}
+
+function renderSearch(){
+  const q = S.open.q || "";
+  shell("Buscar atividade", `
+    <label class="fld"><span>Atividade, sistema ou norma</span><input id="sQ" autocomplete="off" value="${esc(q)}" placeholder="Ex.: extintores, NBR 5419"></label>
+    <div id="sRes"></div>`);
+  drawSearchResults(q);
+  const i = $("#sQ"); i.focus(); i.setSelectionRange(q.length, q.length);
+}
+function drawSearchResults(q){
+  const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const nq = norm(q.trim()), t = todayD();
+  const list = [...S.atividades.values()].filter(a => !nq || norm(`${a.titulo} ${a.sistema} ${a.referencia} ${a.manual}`).includes(nq))
+    .sort((a,b) => a.titulo.localeCompare(b.titulo)).slice(0,40);
+  $("#sRes").innerHTML = list.length ? list.map(a => { const oc = nextOcc(a, t) || a.data; return rowHTML({a, oc, st:status(a.id, oc)}, "date"); }).join("")
+    : `<p class="empty">Nenhuma atividade encontrada.</p>`;
+}
+/* ---------- abas ---------- */
+const TABS = ["calendario","visao","edificio"];
+const DEFAULT_LINK = "https://claude.ai/artifact/PGTQE8oM7WEx1iUApxCdUP";
+function setTab(t){
+  if (!TABS.includes(t)) t = "calendario";
+  S.tab = t; lsSet("cal.tab", t); render(); window.scrollTo({top:0});
+}
+function renderTabs(){
+  document.querySelectorAll(".tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === S.tab));
+  TABS.forEach(t => { $("#tab-" + t).hidden = t !== S.tab; });
+  $("#monthNav").style.visibility = S.tab === "calendario" ? "visible" : "hidden";
+  $("#vToggle").hidden = S.tab !== "calendario";
+}
+
+/* ---------- dica flutuante dos gráficos ---------- */
+const tip = document.createElement("div");
+tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
+function showTip(el, x, y){
+  tip.innerHTML = el.dataset.tip; tip.hidden = false;
+  const r = tip.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+  let left = x + 14; if (left + r.width > vw - 8) left = x - r.width - 14;
+  tip.style.left = Math.max(8, left) + "px"; tip.style.top = Math.max(8, y - r.height - 10) + "px";
+}
+document.addEventListener("pointermove", ev => { const el = ev.target.closest?.("[data-tip]"); if (el) showTip(el, ev.clientX, ev.clientY); else tip.hidden = true; });
+document.addEventListener("pointerdown", ev => { const el = ev.target.closest?.("[data-tip]"); if (el) showTip(el, ev.clientX, ev.clientY); });
+window.addEventListener("scroll", () => { tip.hidden = true; }, {passive:true});
+
+/* ---------- visão geral ---------- */
+const brlShort = v => v >= 1000 ? `R$ ${(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})} mil` : `R$ ${Math.round(v)}`;
+function last12(){ const t = todayD(), out = []; for (let i = 11; i >= 0; i--) out.push(new Date(t.getFullYear(), t.getMonth()-i, 1, 12)); return out; }
+function dashData(){
+  const t = todayD(), months = last12(), from = months[0];
+  const regs = S.registros.filter(r => S.atividades.has(r.atividadeId) && (r.dataExecucao || r.ocorrencia || "") >= ymd(from));
+  const series = months.map(m => {
+    const key = `${m.getFullYear()}-${pad(m.getMonth()+1)}`, vals = {preventiva:0, corretiva:0, outras:0};
+    regs.forEach(r => { if ((r.dataExecucao || r.ocorrencia || "").startsWith(key) && typeof r.custo === "number") vals[S.atividades.get(r.atividadeId).categoria] += r.custo; });
+    return {key, label:MESES[m.getMonth()].slice(0,3), year:m.getFullYear(), vals, total:vals.preventiva + vals.corretiva + vals.outras};
+  });
+  const past = eventsBetween(from, addDays(t,-1), true);
+  const prev = past.filter(e => e.a.categoria === "preventiva");
+  return {
+    series, months,
+    prevTotal:prev.length, prevDone:prev.filter(e => e.st === "done").length,
+    late:lateList(true), prox:eventsBetween(t, addDays(t,30), true).filter(e => e.st !== "done"),
+    cost:series.reduce((s,d) => s + d.total, 0),
+    costBy:Object.fromEntries(Object.keys(CAT).map(c => [c, series.reduce((s,d) => s + d.vals[c], 0)]))
+  };
+}
+
+function renderVisao(){
+  const box = $("#tab-visao");
+  if (!S.db || (S.loaded.a && !S.atividades.size)){
+    box.innerHTML = `<div class="head"><span class="condo">${esc(S.nome || "Manutenção das áreas comuns")}</span><h1>Visão geral</h1></div>
+      <div class="notice"><b>Ainda não há dados para mostrar.</b> A visão geral se forma a partir das atividades do calendário e das anotações registradas no bloco de notas.</div>`;
+    return;
+  }
+  const D = S.dash = dashData();
+  const conf = D.prevTotal ? Math.round(D.prevDone / D.prevTotal * 100) : null;
+  const plan = Object.fromEntries(Object.keys(CAT).map(c => [c, [...S.atividades.values()].filter(a => a.categoria === c).length]));
+  const planTotal = Object.values(plan).reduce((a,b) => a+b, 0);
+
+  // situação por sistema
+  const sis = {};
+  for (const a of S.atividades.values()) (sis[a.sistema || "Sem sistema"] = sis[a.sistema || "Sem sistema"] || []).push(a);
+  const t = todayD();
+  const sisRows = Object.entries(sis).map(([nome, list]) => {
+    const ids = new Set(list.map(a => a.id));
+    const ult = S.registros.filter(r => ids.has(r.atividadeId) && r.concluida).map(r => r.dataExecucao || r.ocorrencia).sort().pop();
+    const prox = list.map(a => nextOcc(a, t)).filter(Boolean).sort()[0];
+    const late = D.late.filter(e => ids.has(e.a.id)).length;
+    return {nome, n:list.length, ult, prox, late};
+  }).sort((a,b) => b.late - a.late || a.nome.localeCompare(b.nome));
+
+  const recentes = S.registros.filter(r => S.atividades.has(r.atividadeId)).sort((a,b) => (b.criadoEm||0) - (a.criadoEm||0)).slice(0,6);
+
+  box.innerHTML = `
+    <div class="head"><span class="condo">${esc(S.nome || "Manutenção das áreas comuns")}</span><h1>Visão geral</h1>
+      <p class="summary">Últimos 12 meses, de ${MESES[D.months[0].getMonth()]} de ${D.months[0].getFullYear()} até hoje. Todas as classificações.</p></div>
+
+    <div class="kpis">
+      <div class="kpi"><span>Preventivas em dia</span><b class="num">${conf == null ? "—" : conf + "%"}</b><small>${D.prevTotal ? `${D.prevDone} de ${D.prevTotal} ocorrências concluídas` : "Nenhuma ocorrência vencida no período"}</small></div>
+      <div class="kpi"><span>Atrasadas</span><b class="num ${D.late.length ? "crit" : ""}">${D.late.length}</b><small>${D.late.length ? "sem registro de conclusão" : "tudo em dia"}</small></div>
+      <div class="kpi"><span>Próximos 30 dias</span><b class="num">${D.prox.length}</b><small>atividades previstas</small></div>
+      <div class="kpi"><span>Custo registrado</span><b class="num">${brl(D.cost) || "R$ 0,00"}</b><small>${D.cost ? `${Math.round(D.costBy.corretiva / D.cost * 100)}% em corretivas` : "nenhum custo anotado"}</small></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Custo de manutenção por mês</h3>
+        <div class="legend-row">${Object.keys(CAT).map(c => `<span class="c-${c}"><i class="sw"></i>${CAT_SHORT[c]}</span>`).join("")}</div></div>
+      ${D.cost ? `<div id="costChart" class="chart"></div>
+        <details class="tbl"><summary>Ver tabela</summary><div class="scroll"><table>
+          <thead><tr><th>Mês</th>${Object.keys(CAT).map(c => `<th>${CAT_SHORT[c]}</th>`).join("")}<th>Total</th></tr></thead>
+          <tbody>${D.series.map(d => `<tr><td>${d.label}/${String(d.year).slice(2)}</td>${Object.keys(CAT).map(c => `<td class="num">${brl(d.vals[c])}</td>`).join("")}<td class="num"><b>${brl(d.total)}</b></td></tr>`).join("")}</tbody>
+        </table></div></details>`
+      : `<p class="empty" style="border:0">Nenhum custo registrado nos últimos 12 meses. Os valores aparecem aqui quando alguém anota o custo no bloco de notas de uma atividade.</p>`}
+    </div>
+
+    <div class="cols2">
+      <div class="card">
+        <div class="card-h"><h3>Composição do plano</h3><span class="muted num">${planTotal} atividades</span></div>
+        <div class="stack">${Object.keys(CAT).filter(c => plan[c]).map(c => `<i class="c-${c}" style="flex:${plan[c]}" data-tip="<b>${CAT[c]}</b><br>${plan[c]} atividade${plan[c]===1?"":"s"} (${Math.round(plan[c]/planTotal*100)}%)"></i>`).join("")}</div>
+        <div class="stack-labels">${Object.keys(CAT).map(c => `<div class="c-${c}"><i class="sw"></i><span>${CAT_SHORT[c]}</span><b class="num">${plan[c]}</b></div>`).join("")}</div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Últimos registros</h3></div>
+        ${recentes.length ? recentes.map(r => { const a = S.atividades.get(r.atividadeId); return `<button class="mini c-${a.categoria}" data-open="${esc(a.id)}" data-oc="${esc(r.ocorrencia)}">
+          <span class="ring ${r.concluida ? "on" : ""}"></span><span style="min-width:0"><span class="rt" style="font-size:15px">${esc(a.titulo)}</span><span class="rs" style="display:block">${fmtD(r.dataExecucao || r.ocorrencia)}${r.executor ? " · " + esc(r.executor) : ""}</span></span>
+          <span class="rr num">${typeof r.custo === "number" ? brl(r.custo) : ""}</span></button>`; }).join("") : `<p class="empty" style="border:0">Nenhuma anotação registrada ainda.</p>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Situação por sistema</h3></div>
+      <div class="scroll"><table class="sis">
+        <thead><tr><th>Sistema</th><th>Atividades</th><th>Última execução</th><th>Próxima</th><th>Situação</th></tr></thead>
+        <tbody>${sisRows.map(r => `<tr><td><b>${esc(r.nome)}</b></td><td class="num">${r.n}</td><td class="num">${r.ult ? fmtD(r.ult) : "—"}</td><td class="num">${r.prox ? fmtD(r.prox) : "—"}</td>
+          <td>${r.late ? `<span class="st crit">! ${r.late} atrasada${r.late===1?"":"s"}</span>` : `<span class="st ok">✓ Em dia</span>`}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>`;
+  drawCostChart();
+}
+
+function drawCostChart(){
+  const box = $("#costChart"); if (!box || !S.dash) return;
+  const data = S.dash.series, W = Math.max(300, box.clientWidth), H = 250, m = {t:14, r:6, b:30, l:62};
+  const max = Math.max(...data.map(d => d.total), 1);
+  const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw)), step = [1,2,2.5,5,10].map(x => x*p).find(s => s >= raw);
+  const top = Math.ceil(max / step) * step, ticks = []; for (let v = 0; v <= top + 1e-9; v += step) ticks.push(v);
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, band = iw / data.length, bw = Math.min(30, band * .58);
+  const y = v => m.t + ih - v / top * ih;
+  const thisKey = ymd(todayD()).slice(0,7);
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Custo de manutenção por mês, por classificação">`;
+  ticks.forEach(v => { svg += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" class="${v ? "grid" : "base"}"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" class="ax">${v ? brlShort(v) : "0"}</text>`; });
+  data.forEach((d, i) => {
+    const cx = m.l + band*i + band/2, x = cx - bw/2;
+    let acc = 0; const segs = Object.keys(CAT).filter(c => d.vals[c] > 0);
+    segs.forEach((c, j) => {
+      const y0 = y(acc), y1 = y(acc + d.vals[c]); acc += d.vals[c];
+      const isTop = j === segs.length - 1, h = Math.max(1, y0 - y1 - (j ? 2 : 0)), yy = y1;
+      const col = `var(--${c === "preventiva" ? "prev" : c === "corretiva" ? "corr" : "outr"})`;
+      if (isTop && h > 4){ const r = 4; svg += `<path fill="${col}" d="M${x},${yy+h} V${yy+r} Q${x},${yy} ${x+r},${yy} H${x+bw-r} Q${x+bw},${yy} ${x+bw},${yy+r} V${yy+h} Z"/>`; }
+      else svg += `<rect x="${x}" y="${yy}" width="${bw}" height="${h}" fill="${col}"/>`;
+    });
+    const tipHTML = `<b>${esc(d.label)}/${d.year}</b>${Object.keys(CAT).map(c => `<div class='tr c-${c}'><i class='sw'></i>${CAT_SHORT[c]}<span>${brl(d.vals[c])}</span></div>`).join("")}<div class='tr tot'>Total<span>${brl(d.total)}</span></div>`;
+    svg += `<rect x="${m.l + band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent" class="hit" data-tip="${esc(tipHTML)}"/>`;
+    svg += `<text x="${cx}" y="${H-10}" text-anchor="middle" class="ax ${d.key === thisKey ? "cur" : ""}">${d.label}</text>`;
+  });
+  box.innerHTML = svg + "</svg>";
+}
+let rsz; window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { if (S.tab === "visao") drawCostChart(); }, 150); });
+
+/* ---------- edifício ---------- */
+const DOC_TIPOS = ["Habite-se","Alvará de funcionamento","Certificado do Corpo de Bombeiros","Regimento interno","Convenção do condomínio","Manual do proprietário (áreas comuns)","Projeto de arquitetura","Projeto estrutural","Projetos complementares","Laudo técnico","Contrato de manutenção","Ata de assembleia","Apólice de seguro","Outro"];
+const CONTATO_FUNCOES = ["Equipe técnica / responsável técnico","Fornecedora de gás","Empresa de elevador","Zeladoria","Portaria / segurança","Manutenção predial"];
+const INFRA_SISTEMAS = ["Reservatórios de água","Central de gás","Elevadores","Gerador","Combate a incêndio","Entrada de energia e quadro geral","SPDA (para-raios)","Bombas de recalque"];
+const val = v => (v == null || v === "") ? `<span class="na">Não informado</span>` : esc(v);
+function docStatus(d){
+  if (!d.validade || !parse(d.validade)) return "";
+  const days = Math.round((parse(d.validade) - todayD()) / 864e5);
+  if (days < 0) return `<span class="st crit">! Vencido em ${fmtD(d.validade)}</span>`;
+  if (days <= 60) return `<span class="st warn">! Vence em ${days} dia${days===1?"":"s"}</span>`;
+  return `<span class="st ok">✓ Válido até ${fmtD(d.validade)}</span>`;
+}
+function docHref(d){
+  if (d.assetId && /^[0-9a-f]{32}$/.test(d.assetId)) return "/_blob/" + d.assetId;
+  return /^https?:\/\//i.test(d.link || "") ? d.link : "";
+}
+const hasEd = () => { const e = S.ed || {}; return !!(e.ano || e.unidades || e.endereco || e.sistemaConstrutivo || e.sindico?.nome || e.administradora?.nome); };
+
+function renderEdificio(){
+  const e = S.ed || {}, own = S.isOwner;
+  const person = (rot, p) => `<div class="pcard"><span>${rot}</span><b>${val(p?.nome)}</b>${p?.contato ? `<small class="sel">${esc(p.contato)}</small>` : ""}${p?.extra ? `<small>${esc(p.extra)}</small>` : ""}</div>`;
+  const docs = Array.isArray(e.documentos) ? e.documentos : [];
+  const contatos = (e.contatos || []).filter(c => c.funcao || c.nome);
+  const infra = (e.infra || []).filter(x => x.sistema);
+  $("#tab-edificio").innerHTML = `
+    <div class="head"><span class="condo">Ficha do empreendimento</span><h1>${esc(S.nome || "Edifício")}</h1>
+      <p class="summary">${e.endereco ? esc(e.endereco) : "Endereço não informado"}</p></div>
+    ${own ? `<div><button class="btn sec" data-go="edificio-edit">Editar informações do edifício</button></div>` : ""}
+
+    <div class="kpis">
+      <div class="kpi"><span>Ano de construção</span><b class="num">${e.ano ? esc(e.ano) : "—"}</b><small>${e.ano && +e.ano > 1900 ? `${todayD().getFullYear() - +e.ano} anos de uso` : "&nbsp;"}</small></div>
+      <div class="kpi"><span>Unidades</span><b class="num">${e.unidades ? esc(e.unidades) : "—"}</b><small>${e.pavimentos ? "Pavimentos: " + esc(e.pavimentos) : "&nbsp;"}</small></div>
+      <div class="kpi wide"><span>Sistema construtivo</span><b style="font-size:20px">${e.sistemaConstrutivo ? esc(e.sistemaConstrutivo) : "—"}</b><small>${e.area ? esc(e.area) + " de área construída" : "&nbsp;"}</small></div>
+    </div>
+
+    <div class="cols2">
+      <div class="card"><div class="card-h"><h3>Ficha técnica</h3></div>
+        <div class="facts">
+          <div class="fact"><span>Construtora / incorporadora</span><b>${val(e.construtora)}</b></div>
+          <div class="fact"><span>Projeto de arquitetura</span><b>${val(e.arquitetura)}</b></div>
+          <div class="fact"><span>Área construída</span><b>${val(e.area)}</b></div>
+          <div class="fact"><span>Pavimentos</span><b>${val(e.pavimentos)}</b></div>
+          <div class="fact"><span>Vagas de garagem</span><b>${val(e.vagas)}</b></div>
+        </div></div>
+      <div class="card"><div class="card-h"><h3>Gestão</h3></div>
+        <div class="pgrid">${person("Síndico(a)", e.sindico)}${person("Subsíndico(a)", e.subsindico)}${person("Administradora", e.administradora)}</div></div>
+    </div>
+
+    <div class="card"><div class="card-h"><h3>Equipe técnica e fornecedores</h3></div>
+      ${contatos.length ? contatos.map(c => `<div class="crow"><span>${esc(c.funcao)}</span><b>${val(c.nome)}</b><small class="sel">${esc(c.contato || "")}</small></div>`).join("") : `<p class="empty" style="border:0">Nenhum contato cadastrado.</p>`}</div>
+
+    <div class="card"><div class="card-h"><h3>Documentos</h3>${own ? `<button class="tlink" data-go="doc-add">Adicionar documento</button>` : ""}</div>
+      ${docs.length ? docs.map(d => { const h = docHref(d); return `<div class="drow">
+        <span class="dicon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span>
+        <span style="min-width:0"><b>${esc(d.nome || d.tipo)}</b><small>${esc(d.tipo || "")}</small>${docStatus(d)}</span>
+        <span class="dact">${h ? `<a class="tlink" href="${esc(h)}" target="_blank" rel="noopener">Abrir</a>` : `<span class="na">Sem arquivo</span>`}
+        ${own ? (S.delDoc === d.id ? `<button class="tlink red" data-deldocyes="${esc(d.id)}">Confirmar exclusão</button>` : `<button class="tlink red" data-deldoc="${esc(d.id)}">Excluir</button>`) : ""}</span></div>`; }).join("")
+      : `<p class="empty" style="border:0">Nenhum documento anexado. Sugestões: habite-se, alvarás, certificado do Corpo de Bombeiros, regimento interno, convenção, manual do proprietário e projeto de arquitetura.</p>`}</div>
+
+    <div class="card"><div class="card-h"><h3>Infraestrutura do edifício</h3><span class="muted">Exibida no painel em modo descanso</span></div>
+      ${infra.length ? `<div class="igrid">${infra.map(x => `<div class="icard"><b>${esc(x.sistema)}</b>${x.descricao ? `<p>${esc(x.descricao)}</p>` : ""}${x.local ? `<small>Local: ${esc(x.local)}</small>` : ""}</div>`).join("")}</div>`
+      : `<p class="empty" style="border:0">Nenhum sistema descrito. Informe capacidade dos reservatórios, central de gás, elevadores, gerador e onde ficam registros e quadros.</p>`}</div>`;
+}
+
+/* ----- edição ----- */
+function edDraftInit(){
+  const e = JSON.parse(JSON.stringify(S.ed || {}));
+  e.sindico = e.sindico || {}; e.subsindico = e.subsindico || {}; e.administradora = e.administradora || {};
+  if (!Array.isArray(e.contatos) || !e.contatos.length) e.contatos = CONTATO_FUNCOES.map(f => ({funcao:f, nome:"", contato:""}));
+  if (!Array.isArray(e.infra) || !e.infra.length) e.infra = INFRA_SISTEMAS.map(s => ({sistema:s, descricao:"", local:""}));
+  e.nome = S.nome; e.linkAcesso = e.linkAcesso || DEFAULT_LINK;
+  S.edDraft = e;
+}
+const F = (id, label, v, ph, full) => `<label class="fld ${full ? "full" : ""}"><span>${label}</span><input data-ef="${id}" value="${esc(v)}" placeholder="${esc(ph || "")}" maxlength="200"></label>`;
+function renderEdForm(){
+  const e = S.edDraft;
+  const listEd = (key, cols) => `${e[key].map((row, i) => `<div class="lrow">${cols.map(([f, ph]) => `<input data-list="${key}" data-i="${i}" data-f="${f}" value="${esc(row[f])}" placeholder="${esc(ph)}" maxlength="300">`).join("")}<button type="button" class="x" data-rmrow="${key}" data-i="${i}" aria-label="Remover linha">✕</button></div>`).join("")}
+    <button type="button" class="tlink" data-addrow="${key}">Adicionar linha</button>`;
+  shell("Informações do edifício", `
+    <form id="eForm" class="form">
+      <h3 class="full fh">Identificação</h3>
+      ${F("nome","Nome do condomínio",e.nome,"Residencial …",true)}
+      ${F("endereco","Endereço",e.endereco,"Rua, número, bairro, cidade",true)}
+      ${F("ano","Ano de construção",e.ano,"Ex.: 2012")}
+      ${F("unidades","Número de unidades",e.unidades,"Ex.: 48")}
+      ${F("pavimentos","Pavimentos",e.pavimentos,"Ex.: 12 + 2 subsolos")}
+      ${F("vagas","Vagas de garagem",e.vagas,"Ex.: 60")}
+      ${F("area","Área construída",e.area,"Ex.: 6.200 m²")}
+      ${F("sistemaConstrutivo","Sistema construtivo",e.sistemaConstrutivo,"Ex.: concreto armado com vedação em alvenaria")}
+      ${F("construtora","Construtora / incorporadora",e.construtora,"")}
+      ${F("arquitetura","Projeto de arquitetura (autor)",e.arquitetura,"Escritório ou profissional")}
+      <h3 class="full fh">Gestão</h3>
+      ${F("sindico.nome","Síndico(a)",e.sindico.nome,"Nome")}${F("sindico.contato","Contato do síndico(a)",e.sindico.contato,"Telefone ou e-mail")}
+      ${F("sindico.extra","Mandato",e.sindico.extra,"Ex.: 2025–2027",true)}
+      ${F("subsindico.nome","Subsíndico(a)",e.subsindico.nome,"Nome")}${F("subsindico.contato","Contato do subsíndico(a)",e.subsindico.contato,"Telefone ou e-mail")}
+      ${F("administradora.nome","Administradora",e.administradora.nome,"Empresa")}${F("administradora.contato","Contato da administradora",e.administradora.contato,"Telefone ou e-mail")}
+      <h3 class="full fh">Equipe técnica e fornecedores</h3>
+      <div class="full lst">${listEd("contatos", [["funcao","Função"],["nome","Empresa ou pessoa"],["contato","Telefone"]])}</div>
+      <h3 class="full fh">Infraestrutura (painel em modo descanso)</h3>
+      <div class="full lst">${listEd("infra", [["sistema","Sistema"],["descricao","Descrição, ex.: 2 caixas de 15.000 L"],["local","Local"]])}</div>
+      <h3 class="full fh">Painel</h3>
+      ${F("linkAcesso","Link de acesso no QR code",e.linkAcesso,DEFAULT_LINK,true)}
+      <div class="actions full"><button type="button" class="tlink" data-x>Cancelar</button><span class="err" id="eErr"></span><button class="btn" type="submit">Salvar</button></div>
+    </form>`);
+}
+function setPath(o, path, v){ const ks = path.split("."); let t = o; ks.slice(0,-1).forEach(k => t = t[k] = t[k] || {}); t[ks.at(-1)] = v; }
+async function saveEdificio(ev){
+  ev.preventDefault();
+  const e = S.edDraft, nome = String(e.nome || "").trim();
+  const clean = rows => rows.map(r => Object.fromEntries(Object.entries(r).map(([k,v]) => [k, String(v||"").trim()]))).filter(r => Object.entries(r).some(([k,v]) => v && k !== "funcao" && k !== "sistema"));
+  const body = {...e, contatos:clean(e.contatos), infra:clean(e.infra), documentos:(S.ed?.documentos || [])};
+  delete body.nome;
+  const ok = await guard(async () => { await S.db.doc("config/edificio").set(body); if (nome !== S.nome) await S.db.doc("config/geral").set({nome}); }, $("#eErr"));
+  if (ok){ S.ed = body; S.nome = nome; closeSheet(); render(); }
+}
+
+function renderDocForm(){
+  shell("Adicionar documento", `
+    <form id="dForm" class="form">
+      <label class="fld full"><span>Tipo</span><select id="dTipo">${DOC_TIPOS.map(t => `<option>${esc(t)}</option>`).join("")}</select></label>
+      <label class="fld full"><span>Nome do documento</span><input id="dNome" maxlength="140" placeholder="Ex.: Habite-se nº 123/2012"></label>
+      <label class="fld"><span>Validade (se houver)</span><input type="date" id="dValidade"></label>
+      ${S.assets ? `<label class="fld"><span>Arquivo (PDF ou imagem, até 20 MB)</span><input type="file" id="dArq" accept="application/pdf,image/png,image/jpeg,image/webp"></label>` : ""}
+      <label class="fld full"><span>${S.assets ? "Ou link externo" : "Link do documento"}</span><input id="dLink" type="url" placeholder="https://…"></label>
+      <div class="actions full"><button type="button" class="tlink" data-x>Cancelar</button><span class="err" id="dErr"></span><button class="btn" type="submit">Salvar documento</button></div>
+    </form>`);
+}
+async function saveDoc(ev){
+  ev.preventDefault();
+  const err = $("#dErr"), file = $("#dArq")?.files?.[0], link = $("#dLink").value.trim();
+  if (!file && !link){ err.textContent = "Anexe um arquivo ou informe um link."; return; }
+  if (link && !/^https?:\/\//i.test(link)){ err.textContent = "O link precisa começar com https://"; return; }
+  const btn = ev.submitter; if (btn){ btn.disabled = true; btn.textContent = "Salvando…"; }
+  let assetId = "";
+  if (file){
+    try { assetId = (await S.assets.upload(file)).id; }
+    catch (e){
+      err.textContent = e?.code === "too_large" ? "Arquivo maior que 20 MB." : e?.code === "unsupported_type" ? "Use PDF, PNG, JPG ou WEBP." : "Não foi possível enviar o arquivo. Tente de novo.";
+      if (btn){ btn.disabled = false; btn.textContent = "Salvar documento"; } return;
+    }
+  }
+  const d = {id:"d" + Date.now().toString(36), tipo:$("#dTipo").value, nome:$("#dNome").value.trim(), validade:$("#dValidade").value || "", assetId, link:file ? "" : link, criadoEm:Date.now()};
+  const docs = [...(S.ed?.documentos || []), d];
+  const ok = await guard(() => S.db.doc("config/edificio").set({...(S.ed || {}), documentos:docs}), err);
+  if (ok){ S.ed = {...(S.ed || {}), documentos:docs}; closeSheet(); render(); }
+  else if (btn){ btn.disabled = false; btn.textContent = "Salvar documento"; }
+}
+async function deleteDoc(id){
+  const d = (S.ed?.documentos || []).find(x => x.id === id); if (!d) return;
+  const docs = S.ed.documentos.filter(x => x.id !== id);
+  const ok = await guard(() => S.db.doc("config/edificio").set({...S.ed, documentos:docs}), null);
+  if (ok){
+    if (d.assetId && S.assets){ try { await S.assets.delete(d.assetId); } catch {} }
+    S.ed = {...S.ed, documentos:docs}; S.delDoc = null; render();
+  }
+}
+
+/* ---------- painel: telas em rotação ---------- */
+let slide = 0, slideTimer = null;
+function kioskSlides(){
+  const e = S.ed || {}, s = ["agenda"];
+  if (hasEd()) s.push("edificio");
+  if ((e.infra || []).some(x => x.sistema && (x.descricao || x.local))) s.push("infra");
+  s.push("contatos");
+  return s;
+}
+function scheduleSlide(){
+  clearTimeout(slideTimer);
+  if (!document.body.classList.contains("painel")) return;
+  const list = kioskSlides(), cur = list[slide % list.length];
+  slideTimer = setTimeout(() => { slide = (slide + 1) % kioskSlides().length; renderKiosk(); scheduleSlide(); }, cur === "agenda" ? 45000 : 15000);
+}
+function kioskSlideHTML(kind){
+  const t = todayD(), tk = ymd(t), e = S.ed || {};
+  if (kind === "agenda"){
+    const semana = eventsBetween(t, addDays(t,7), true).filter(x => x.st !== "done");
+    const lateAll = lateList(true), seen = new Map();
+    lateAll.forEach(l => { const c = seen.get(l.a.id); seen.set(l.a.id, {...l, n:(c?.n || 0) + 1, first:c?.first || l.oc}); });
+    const late = [...seen.values()];
+    const recentes = S.registros.filter(r => r.concluida && S.atividades.has(r.atividadeId)).sort((a,b) => (b.criadoEm||0) - (a.criadoEm||0)).slice(0,5);
+    const k = x => `<div class="k-row c-${x.a.categoria}"><span class="ring"></span><div>
+      <div class="d ${x.st === "late" ? "late" : ""}">${x.n > 1 ? `${x.n} ocorrências pendentes desde ${shortDay(x.first)}` : (x.oc === tk ? "Hoje" : longDay(x.oc))} · ${CAT_SHORT[x.a.categoria]}</div>
+      <div class="tt">${esc(x.a.titulo)}</div><div class="w">${esc(x.a.porque || "")}</div></div></div>`;
+    return `<div class="k-cols">
+      <div class="k-col"><h2>Hoje e próximos 7 dias <small>${semana.length}</small></h2>${semana.length ? semana.slice(0,5).map(k).join("") : `<p class="empty">Nenhuma atividade prevista.</p>`}</div>
+      <div class="k-col"><h2>Atrasadas <small>${lateAll.length}</small></h2>${late.length ? late.slice(0,4).map(k).join("") : `<p class="empty">Tudo em dia.</p>`}</div>
+      <div class="k-col"><h2>Concluídas recentemente</h2>${recentes.length ? recentes.map(r => { const a = S.atividades.get(r.atividadeId); return `<div class="k-row c-${a.categoria}"><span class="ring on"></span><div><div class="d">${fmtD(r.dataExecucao || r.ocorrencia)}</div><div class="tt">${esc(a.titulo)}</div>${r.executor ? `<div class="w">Por ${esc(r.executor)}</div>` : ""}</div></div>`; }).join("") : `<p class="empty">Nenhum registro ainda.</p>`}</div></div>`;
+  }
+  if (kind === "edificio"){
+    const tile = (l, v, s) => `<div class="k-tile"><span>${l}</span><b class="${String(v || "").length > 18 ? "long" : ""}">${v ? esc(v) : "—"}</b>${s ? `<small>${s}</small>` : ""}</div>`;
+    const p = (l, o) => `<div class="k-person"><span>${l}</span><b>${o?.nome ? esc(o.nome) : "—"}</b>${o?.contato ? `<small>${esc(o.contato)}</small>` : ""}</div>`;
+    return `<div class="k-ed"><div class="k-tiles">
+        ${tile("Ano de construção", e.ano, e.ano && +e.ano > 1900 ? `${t.getFullYear() - +e.ano} anos` : "")}
+        ${tile("Unidades", e.unidades, e.pavimentos ? "Pavimentos: " + esc(e.pavimentos) : "")}
+        ${tile("Sistema construtivo", e.sistemaConstrutivo, "")}
+        ${tile("Área construída", e.area, "")}
+        ${tile("Projeto de arquitetura", e.arquitetura, "")}
+        ${tile("Construtora", e.construtora, "")}
+      </div><div class="k-people"><h2>Gestão do condomínio</h2>${p("Síndico(a)", e.sindico)}${p("Subsíndico(a)", e.subsindico)}${p("Administradora", e.administradora)}</div></div>`;
+  }
+  if (kind === "infra"){
+    const infra = (e.infra || []).filter(x => x.sistema && (x.descricao || x.local)).slice(0,9);
+    return `<div class="k-infra">${infra.map(x => `<div class="k-icard"><b>${esc(x.sistema)}</b>${x.descricao ? `<p>${esc(x.descricao)}</p>` : ""}${x.local ? `<small>Local: ${esc(x.local)}</small>` : ""}</div>`).join("")}</div>`;
+  }
+  const contatos = (e.contatos || []).filter(c => c.nome || c.contato).slice(0,7);
+  return `<div class="k-ed"><div class="k-people" style="flex:1.4"><h2>Equipe técnica e fornecedores</h2>
+      ${contatos.length ? contatos.map(c => `<div class="k-person"><span>${esc(c.funcao)}</span><b>${esc(c.nome || "—")}</b>${c.contato ? `<small>${esc(c.contato)}</small>` : ""}</div>`).join("") : `<p class="empty">Contatos ainda não cadastrados.</p>`}</div>
+    <div class="k-people k-emerg"><h2>Emergência</h2>
+      <div class="k-person"><span>Corpo de Bombeiros</span><b class="big">193</b></div>
+      <div class="k-person"><span>SAMU</span><b class="big">192</b></div>
+      <div class="k-person"><span>Polícia Militar</span><b class="big">190</b></div>
+      ${e.administradora?.contato ? `<div class="k-person"><span>Administradora</span><b>${esc(e.administradora.contato)}</b></div>` : ""}</div></div>`;
+}
+const SLIDE_T = {agenda:"Manutenção das áreas comuns", edificio:"Conheça o edifício", infra:"Infraestrutura do edifício", contatos:"Contatos úteis"};
+function renderKiosk(){
+  if (!document.body.classList.contains("painel")) return;
+  const list = kioskSlides(); slide = slide % list.length;
+  const kind = list[slide], t = todayD(), now = new Date();
+  $("#kiosk").innerHTML = `
+    <div class="k-top"><div><div class="condo">${SLIDE_T[kind]}</div><h1>${esc(S.nome || "Calendário do Condomínio")}</h1></div>
+      <div class="k-clock"><b id="kClock">${pad(now.getHours())}:${pad(now.getMinutes())}</b><span>${longDay(ymd(t))} de ${t.getFullYear()}</span></div></div>
+    <div class="k-stage" data-kstage>${kioskSlideHTML(kind)}</div>
+    <div class="k-foot">
+      <div class="k-dots">${list.map((k,i) => `<i class="${i === slide ? "on" : ""}" title="${SLIDE_T[k]}"></i>`).join("")}</div>
+      <div class="legend">${kind === "agenda" ? Object.keys(CAT).map(c => `<div class="c-${c}"><span class="dot"></span>${CAT[c]}</div>`).join("") : ""}</div>
+      <div class="k-qr"><div><b>Acesse pelo celular</b><span>Calendário, documentos e contatos</span><button class="tlink" id="exitKiosk">Sair do modo painel</button></div><div id="kQR"></div></div>
+    </div>`;
+  const q = $("#kQR"), link = (S.ed?.linkAcesso && /^https?:\/\//.test(S.ed.linkAcesso)) ? S.ed.linkAcesso : DEFAULT_LINK;
+  if (q && window.QRCode){ try { new QRCode(q, {text:link, width:108, height:108, colorDark:"#222222", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M}); } catch {} }
+  else if (q) q.textContent = link;
+}
+/* ---------- escrita ---------- */
+async function guard(fn, errEl){
+  try { await fn(); return true; }
+  catch (e){
+    const code = e?.code;
+    if (code === "invalid_argument" && S.canWrite == null){ S.writeRefused = true; render(); }
+    const msg = code === "invalid_argument" ? "Você não tem permissão para salvar. Peça ao síndico acesso de Colaborador ou superior."
+      : code === "quota_exceeded" ? "O calendário atingiu o limite de armazenamento. Exclua registros antigos para continuar."
+      : "Não foi possível salvar agora. Verifique a conexão e tente de novo.";
+    if (errEl) errEl.textContent = msg;
+    return false;
+  }
+}
+const numBR = s => { s = String(s||"").trim(); if (!s) return null; const n = Number(s.replace(/[R$\s]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",", ".")); return isFinite(n) ? Math.round(n*100)/100 : NaN; };
+
+async function saveActivity(ev){
+  ev.preventDefault();
+  const id = S.open.id, err = $("#fErr");
+  const body = {
+    titulo:$("#fTitulo").value.trim(), sistema:$("#fSistema").value.trim(), categoria:$("#fCat").value,
+    data:$("#fData").value, periodicidade:$("#fPer").value, porque:$("#fPorque").value.trim(), como:$("#fComo").value.trim(),
+    responsavel:$("#fResp").value.trim(), manual:$("#fManual").value.trim(), referencia:$("#fRef").value.trim(), atualizadoEm:Date.now()
+  };
+  if (!body.titulo || !parse(body.data) || !body.porque){ err.textContent = "Preencha atividade, data e por que fazer."; return; }
+  const ok = await guard(async () => {
+    if (id) await S.db.doc("atividades/" + id).update(body);
+    else { const ref = S.db.collection("atividades").doc(); await ref.set({...body, id:ref.id, criadoPor:S.myId, criadoEm:Date.now()}); S.newId = ref.id; }
+  }, err);
+  if (ok){ const nid = id || S.newId; S.sel = body.data; const d = parse(body.data); S.cursor = new Date(d.getFullYear(), d.getMonth(), 1, 12); openSheet("detail", {id:nid, oc:body.data}); render(); }
+}
+
+async function saveNote(ev){
+  ev.preventDefault();
+  const err = $("#nErr"), custo = numBR($("#nCusto").value);
+  if (Number.isNaN(custo)){ err.textContent = "Custo inválido. Use apenas números, por exemplo 1.250,00."; return; }
+  const body = { atividadeId:S.open.id, ocorrencia:$("#nOc").value, dataExecucao:$("#nData").value || null, executor:$("#nExec").value.trim(),
+    custo, texto:$("#nTexto").value.trim(), concluida:$("#nDone").checked, autor:S.myId, criadoEm:Date.now() };
+  if (!body.executor && !body.texto && custo == null && !body.concluida){ err.textContent = "Escreva algo antes de salvar."; return; }
+  const btn = ev.submitter; if (btn) btn.disabled = true;
+  const ok = await guard(async () => { const ref = S.db.collection("registros").doc(); await ref.set({...body, id:ref.id}); }, err);
+  if (btn) btn.disabled = false;
+  if (ok){ S.lastDetailId = null; S.open.oc = body.ocorrencia; renderDetail(); }
+}
+
+async function doImport(){
+  const start = parse($("#iData").value), err = $("#iErr");
+  if (!start){ err.textContent = "Escolha a primeira data."; return; }
+  const keys = [...document.querySelectorAll(".tpl input:checked:not(:disabled)")].map(i => i.dataset.k);
+  if (!keys.length){ err.textContent = "Selecione ao menos uma atividade."; return; }
+  const btn = $("#doImport"); btn.disabled = true;
+  let n = 0;
+  for (const k of keys){
+    const x = TEMPLATE.find(t => t.k === k);
+    const ok = await guard(async () => {
+      const ref = S.db.collection("atividades").doc("modelo-" + k);
+      await ref.set({id:ref.id, modelo:k, titulo:x.t, sistema:x.s, categoria:x.c, periodicidade:x.p, data:ymd(start),
+        porque:x.pq, como:x.como, responsavel:x.r, referencia:x.ref, manual:"", criadoPor:S.myId, criadoEm:Date.now(), atualizadoEm:Date.now()});
+    }, err);
+    if (!ok) break;
+    n++; btn.textContent = `Importando ${n}/${keys.length}…`;
+  }
+  if (n === keys.length){ S.cursor = new Date(start.getFullYear(), start.getMonth(), 1, 12); S.sel = ymd(start); closeSheet(); render(); }
+  else btn.disabled = false;
+}
+
+async function deleteActivity(){
+  const id = S.open.id, regs = regsFor(id);
+  const ok = await guard(async () => { for (const r of regs) await S.db.doc("registros/" + r.id).delete(); await S.db.doc("atividades/" + id).delete(); }, null);
+  if (ok){ closeSheet(); render(); }
+}
+
+async function saveTeam(list){
+  const ok = await guard(() => S.db.doc("config/equipe").set({membros:list}), $("#tErr"));
+  if (ok){ S.equipe = list; renderTeam(); render(); }
+}
+
+/* ---------- eventos ---------- */
+function go(where){
+  if (where === "import") return openSheet("import", {});
+  if (where === "add") return openSheet("form", {date:S.sel});
+  if (where === "team") return openSheet("team", {});
+  if (where === "config") return openSheet("config", {});
+  if (where === "kiosk") return enterKiosk();
+  if (where === "edificio-edit"){ edDraftInit(); return openSheet("edificio", {}); }
+  if (where === "doc-add") return openSheet("doc", {});
+}
+document.addEventListener("click", async ev => {
+  const el = ev.target.closest("button,[data-close],[data-kstage]");
+  if (!el) return;
+  if (el.dataset.kstage !== undefined){ slide = 0; renderKiosk(); scheduleSlide(); return; }
+  if (el.dataset.tab) return setTab(el.dataset.tab);
+  if (el.dataset.addrow){ const k = el.dataset.addrow; S.edDraft[k].push(k === "infra" ? {sistema:"", descricao:"", local:""} : {funcao:"", nome:"", contato:""}); return renderEdForm(); }
+  if (el.dataset.rmrow){ S.edDraft[el.dataset.rmrow].splice(+el.dataset.i, 1); return renderEdForm(); }
+  if (el.dataset.deldoc){ S.delDoc = el.dataset.deldoc; return render(); }
+  if (el.dataset.deldocyes) return deleteDoc(el.dataset.deldocyes);
+  if (el.matches("[data-close]") && ev.target !== el) return;
+  if (el.matches("[data-close],[data-x]")) return closeSheet();
+  if (el.dataset.open) return openSheet("detail", {id:el.dataset.open, oc:el.dataset.oc});
+  if (el.dataset.day){ S.sel = el.dataset.day; return render(); }
+  if (el.dataset.go) return go(el.dataset.go);
+  if (el.dataset.new) return openSheet("form", {date:el.dataset.new});
+  if (el.dataset.edit) return openSheet("form", {id:el.dataset.edit});
+  if (el.dataset.delreg){ await guard(() => S.db.doc("registros/" + el.dataset.delreg).delete(), $("#nErr")); return; }
+  if (el.dataset.rm) return saveTeam(S.equipe.filter(x => x !== el.dataset.rm));
+  if (el.dataset.add){ if (!S.equipe.includes(el.dataset.add)) await saveTeam([...S.equipe, el.dataset.add]); return; }
+  if (el.matches("[data-delask]")){
+    const n = regsFor(S.open.id).length;
+    $("#actRow").outerHTML = `<div class="confirm"><span>Excluir esta atividade${n ? ` e ${n} anotação(ões)` : ""}? Não dá para desfazer.</span>
+      <span style="display:flex;gap:12px;align-items:center"><button class="tlink" data-delno>Cancelar</button><button class="btn red" data-delyes>Excluir</button></span></div>`;
+    return;
+  }
+  if (el.matches("[data-delyes]")) return deleteActivity();
+  if (el.matches("[data-delno]")) return renderDetail();
+  if (el.dataset.cat){
+    S.cats.has(el.dataset.cat) ? S.cats.delete(el.dataset.cat) : S.cats.add(el.dataset.cat);
+    if (!S.cats.size) S.cats.add(el.dataset.cat);
+    return render();
+  }
+  switch (el.id){
+    case "prev": S.cursor = new Date(S.cursor.getFullYear(), S.cursor.getMonth()-1, 1, 12); return render();
+    case "next": S.cursor = new Date(S.cursor.getFullYear(), S.cursor.getMonth()+1, 1, 12); return render();
+    case "todayBtn": { const t = todayD(); S.cursor = new Date(t.getFullYear(), t.getMonth(), 1, 12); S.sel = ymd(t); render(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+    case "vToggle": S.view = S.view === "agenda" ? "mes" : "agenda"; lsSet("cal.view", S.view); return render();
+    case "addBtn": return openSheet("form", {date:S.sel});
+    case "searchBtn": return openSheet("search", {q:""});
+    case "menuBtn": return openSheet("menu", {});
+    case "doImport": return doImport();
+    case "kioskBtn": return enterKiosk();
+    case "exitKiosk": return exitKiosk();
+  }
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && S.open) closeSheet(); });
+document.addEventListener("submit", ev => {
+  if (ev.target.id === "aForm") return saveActivity(ev);
+  if (ev.target.id === "noteForm") return saveNote(ev);
+  if (ev.target.id === "eForm") return saveEdificio(ev);
+  if (ev.target.id === "dForm") return saveDoc(ev);
+  if (ev.target.id === "cForm"){
+    ev.preventDefault();
+    const nome = $("#cNome").value.trim();
+    guard(() => S.db.doc("config/geral").set({nome}), $("#cErr")).then(ok => { if (ok){ S.nome = nome; closeSheet(); render(); } });
+  }
+});
+document.addEventListener("input", async ev => {
+  const d = ev.target.dataset;
+  if (d.ef && S.edDraft) return setPath(S.edDraft, d.ef, ev.target.value);
+  if (d.list && S.edDraft){ S.edDraft[d.list][+d.i][d.f] = ev.target.value; return; }
+  if (ev.target.id === "sQ"){ S.open.q = ev.target.value; return drawSearchResults(ev.target.value); }
+  if (ev.target.id !== "tSearch" || !S.user) return;
+  const hits = await S.user.search(ev.target.value.trim());
+  const box = $("#tResults"); if (!box) return;
+  const list = hits.filter(h => h.id && !S.equipe.includes(h.id) && !h.isMe);
+  box.hidden = !list.length;
+  box.innerHTML = list.map(h => `<button data-add="${esc(h.id)}"><img alt="" src="${esc(h.avatarUrl)}"><span>${esc(h.name)}${h.email ? ` <span style="color:var(--muted)">· ${esc(h.email)}</span>` : ""}</span></button>`).join("");
+});
+document.addEventListener("focusin", ev => { if (ev.target.id === "tSearch") ev.target.dispatchEvent(new Event("input", {bubbles:true})); });
+
+/* ---------- modo painel ---------- */
+let wakeLock = null, clockTimer = null, lastDay = ymd(todayD());
+async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request("screen"); } catch {} }
+function enterKiosk(){
+  closeSheet(); document.body.classList.add("painel"); slide = 0; renderKiosk(); scheduleSlide(); keepAwake();
+  try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch {}
+  clearInterval(clockTimer);
+  clockTimer = setInterval(() => {
+    const n = new Date(), c = $("#kClock"); if (c) c.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+    if (ymd(todayD()) !== lastDay){ lastDay = ymd(todayD()); render(); }
+  }, 15000);
+}
+function exitKiosk(){
+  document.body.classList.remove("painel"); clearInterval(clockTimer); clearTimeout(slideTimer);
+  try { wakeLock?.release(); } catch {} wakeLock = null;
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
+  render();
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && document.body.classList.contains("painel")) keepAwake(); });
+
+/* ---------- inicialização ---------- */
+{ const h = location.hash.slice(1); if (TABS.includes(h)) S.tab = h; }
+render();
+if (location.hash === "#painel") enterKiosk();
+
+(async () => {
+  const use = n => window.claude?.use ? window.claude.use(n).catch(() => null) : null;
+  const [db, user, assets] = await Promise.all([use("db"), use("user"), use("assets")]);
+  S.db = db; S.user = user; S.assets = assets;
+  if (user){
+    S.me = await user.me(); S.myId = S.me.id; S.isOwner = S.me.isOwner;
+    S.canWrite = await user.can("data.write");
+  }
+  if (!db){ render(); return; }
+  const onErr = () => {};
+  db.collection("atividades").onSnapshot(snap => {
+    S.atividades = new Map(snap.docs.map(d => { const v = d.data(); return [d.id, {...v, id:d.id, titulo:String(v.titulo||"Sem título"), categoria: CAT[v.categoria] ? v.categoria : "outras"}]; }));
+    S.loaded.a = true; render();
+  }, onErr);
+  db.collection("registros").onSnapshot(snap => {
+    S.registros = snap.docs.map(d => ({...d.data(), id:d.id}));
+    S.loaded.r = true; render();
+  }, onErr);
+  db.doc("config/equipe").onSnapshot(s => { const m = s.exists ? s.data().membros : []; S.equipe = Array.isArray(m) ? m.filter(x => typeof x === "string") : []; render(); if (S.open?.type === "team") renderTeam(); }, onErr);
+  db.doc("config/edificio").onSnapshot(s => { S.ed = s.exists ? s.data() : {}; render(); }, onErr);
+  db.doc("config/geral").onSnapshot(s => { S.nome = s.exists ? String(s.data().nome || "") : ""; render(); }, onErr);
+  render();
+})();
+})();
+</script>

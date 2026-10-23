@@ -293,6 +293,29 @@ body.painel{padding-block:0}
 .k-clock{text-align:right}
 .k-clock b{display:block;font-size:clamp(40px,5.5vw,84px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .k-clock span{font-size:clamp(15px,1.5vw,22px);color:var(--muted)}
+.k-calwrap{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1fr);gap:40px;min-height:0}
+.k-month{display:flex;flex-direction:column;min-height:0}
+.k-month h2{font-size:clamp(22px,2.2vw,34px);font-weight:800;padding-bottom:10px}
+.k-month h2 span{color:var(--faint)}
+.k-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding-bottom:8px}
+.k-dow div{font-size:clamp(12px,1vw,15px);color:var(--muted);font-weight:600;text-align:center}
+.k-grid{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;min-height:560px}
+.kc{border:1px solid var(--line-2);border-radius:12px;padding:8px 9px;display:flex;flex-direction:column;gap:4px;min-width:0;overflow:hidden}
+.kc.blank{border:0}
+.kc.past{background:var(--soft);border-color:var(--line)}
+.kc.today{border:2px solid var(--ink)}
+.kn{font-size:clamp(13px,1.1vw,17px);font-weight:700;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;margin:-2px 0 2px -3px}
+.kc.past .kn{color:var(--faint)}
+.kc.today .kn{background:var(--ink);color:var(--bg)}
+.ke{font-size:clamp(11px,.85vw,13.5px);line-height:1.25;padding:3px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:color-mix(in srgb,var(--c) 13%,transparent);border-left:3px solid var(--c)}
+.ke.done{color:var(--muted);text-decoration:line-through;background:transparent}
+.ke.late{color:var(--late);font-weight:600}
+.km{font-size:clamp(10.5px,.8vw,12.5px);color:var(--muted)}
+.k-side{display:flex;flex-direction:column;gap:28px;min-width:0}
+.k-next{margin:12px 0 0;font-size:clamp(13px,1.05vw,16px);color:var(--muted)}
+.k-next b{color:var(--ink)}
+@media (max-width:900px){.k-calwrap{grid-template-columns:1fr}.k-grid{min-height:420px}}
 .k-cols{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;flex:1}
 .k-col{display:flex;flex-direction:column;min-width:0}
 .k-col h2{font-size:clamp(20px,1.9vw,28px);font-weight:700;padding-bottom:8px;display:flex;justify-content:space-between;align-items:baseline}
@@ -1171,10 +1194,29 @@ function kioskSlideHTML(kind){
     const k = x => `<div class="k-row c-${x.a.categoria}"><span class="ring"></span><div>
       <div class="d ${x.st === "late" ? "late" : ""}">${x.n > 1 ? `${x.n} ocorrências pendentes desde ${shortDay(x.first)}` : (x.oc === tk ? "Hoje" : longDay(x.oc))} · ${CAT_SHORT[x.a.categoria]}</div>
       <div class="tt">${esc(x.a.titulo)}</div><div class="w">${esc(x.a.porque || "")}</div></div></div>`;
-    return `<div class="k-cols">
-      <div class="k-col"><h2>Hoje e próximos 7 dias <small>${semana.length}</small></h2>${semana.length ? semana.slice(0,5).map(k).join("") : `<p class="empty">Nenhuma atividade prevista.</p>`}</div>
-      <div class="k-col"><h2>Atrasadas <small>${lateAll.length}</small></h2>${late.length ? late.slice(0,4).map(k).join("") : `<p class="empty">Tudo em dia.</p>`}</div>
-      <div class="k-col"><h2>Concluídas recentemente</h2>${recentes.length ? recentes.map(r => { const a = S.atividades.get(r.atividadeId); return `<div class="k-row c-${a.categoria}"><span class="ring on"></span><div><div class="d">${fmtD(r.dataExecucao || r.ocorrencia)}</div><div class="tt">${esc(a.titulo)}</div>${r.executor ? `<div class="w">Por ${esc(r.executor)}</div>` : ""}</div></div>`; }).join("") : `<p class="empty">Nenhum registro ainda.</p>`}</div></div>`;
+    const hoje = eventsBetween(t, t, true);
+    const first = new Date(t.getFullYear(), t.getMonth(), 1, 12), last = new Date(t.getFullYear(), t.getMonth()+1, 0, 12);
+    const by = {}; eventsBetween(first, last, true).forEach(x => (by[x.oc] = by[x.oc] || []).push(x));
+    let cells = "";
+    for (let i = 0; i < first.getDay(); i++) cells += `<div class="kc blank"></div>`;
+    for (let d = new Date(first); d <= last; d = addDays(d,1)){
+      const key = ymd(d), list = by[key] || [];
+      cells += `<div class="kc ${key < tk ? "past" : ""} ${key === tk ? "today" : ""}"><span class="kn">${d.getDate()}</span>
+        ${list.slice(0,3).map(x => `<span class="ke c-${x.a.categoria} ${x.st}">${esc(x.a.titulo)}</span>`).join("")}
+        ${list.length > 3 ? `<span class="km">+${list.length-3} atividades</span>` : ""}</div>`;
+    }
+    const rest = (7 - (first.getDay() + last.getDate()) % 7) % 7;
+    for (let i = 0; i < rest; i++) cells += `<div class="kc blank"></div>`;
+    const rows = Math.ceil((first.getDay() + last.getDate()) / 7);
+    return `<div class="k-calwrap">
+      <div class="k-month"><h2>${cap(MESES[t.getMonth()])} <span>${t.getFullYear()}</span></h2>
+        <div class="k-dow">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(d => `<div>${d}</div>`).join("")}</div>
+        <div class="k-grid" style="grid-template-rows:repeat(${rows},minmax(0,1fr))">${cells}</div></div>
+      <div class="k-side">
+        <div class="k-col"><h2>Hoje <small>${hoje.length}</small></h2>${hoje.length ? hoje.slice(0,3).map(k).join("") : `<p class="empty">Nenhuma atividade hoje.</p>`}
+          ${semana.filter(x => x.oc !== tk).length ? `<p class="k-next">Próxima: <b>${esc(semana.find(x => x.oc !== tk).a.titulo)}</b> · ${longDay(semana.find(x => x.oc !== tk).oc)}</p>` : ""}</div>
+        <div class="k-col"><h2>Atrasadas <small>${lateAll.length}</small></h2>${late.length ? late.slice(0,3).map(k).join("") : `<p class="empty">Tudo em dia.</p>`}</div>
+      </div></div>`;
   }
   if (kind === "edificio"){
     const tile = (l, v, s) => `<div class="k-tile"><span>${l}</span><b class="${String(v || "").length > 18 ? "long" : ""}">${v ? esc(v) : "—"}</b>${s ? `<small>${s}</small>` : ""}</div>`;

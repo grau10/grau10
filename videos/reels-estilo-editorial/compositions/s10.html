@@ -1,0 +1,69 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 1050px; text-align: center; }
+    .ttl > div { position: relative; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    #s10-flash { position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at 50% 62%, rgba(255,255,255,.9), rgba(255,210,80,.35) 40%, rgba(0,0,0,0) 70%); }
+    #s10-coins { position: absolute; left: 540px; top: 1240px; width: 0; height: 0; }
+    .coin { position: absolute; left: -48px; top: -48px; width: 96px; height: 96px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #fff6b0, #f5d90a 45%, #b88a00); border: 4px solid #8a6500;
+            font-family: "Archivo Black"; font-size: 30px; line-height: 88px; text-align: center; color: #6b4e00;
+            box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+    #s10-title .l2 { font-size: 150px; }
+  </style>
+  <div id="root" data-composition-id="s10" data-width="1080" data-height="1920">
+    <div id="s10-title" class="ttl clip" data-start="0" data-duration="4.45">
+      <div id="s10-inner">
+        <div id="s10-l1" class="l1">outro recurso</div>
+        <div id="s10-l2" class="l2">financeiro</div>
+      </div>
+    </div>
+    <div id="s10-flash" class="clip" data-start="0" data-duration="0.6"></div>
+    <div id="s10-c1" class="chip clip" data-start="0.1" data-duration="1.4"><span>não viabilizar...</span></div>
+    <div id="s10-coins" class="clip" data-start="3.3" data-duration="1.1">
+      <div id="s10-k0" class="coin">R$</div>
+      <div id="s10-k1" class="coin">R$</div>
+      <div id="s10-k2" class="coin">R$</div>
+      <div id="s10-k3" class="coin">R$</div>
+      <div id="s10-k4" class="coin">R$</div>
+      <div id="s10-k5" class="coin">R$</div>
+    </div>
+
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s10-l1", { opacity: 0, y: 26, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.32, ease: "power3.out" }, 2.38);
+    tl.fromTo("#s10-l2", { clipPath: "inset(0% 100% 0% 0%)", scale: 1.08 }, { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.42, ease: "power2.out" }, 3.38);
+    tl.to("#s10-inner", { opacity: 0, y: -18, filter: "blur(10px)", duration: 0.22, ease: "power2.in" }, 4.2);
+    tl.fromTo("#s10-flash", { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.08).to("#s10-flash", { opacity: 0, duration: 0.4, ease: "power2.out" }, 0.16);
+    tl.fromTo("#s10-c1 span", { opacity: 0, scale: 1.4 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(2)" }, 0.1);
+    tl.fromTo("#s10-k0", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: -330, y: -170, scale: 1, opacity: 1, rotation: -120, duration: 0.55, ease: "power3.out" }, 3.32);
+    tl.to("#s10-k0", { y: -10, opacity: 0, duration: 0.4, ease: "power2.in" }, 3.92);
+    tl.fromTo("#s10-k1", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: 300, y: -210, scale: 1, opacity: 1, rotation: 84, duration: 0.55, ease: "power3.out" }, 3.35);
+    tl.to("#s10-k1", { y: -50, opacity: 0, duration: 0.4, ease: "power2.in" }, 3.94);
+    tl.fromTo("#s10-k2", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: -420, y: 40, scale: 1, opacity: 1, rotation: -48, duration: 0.55, ease: "power3.out" }, 3.38);
+    tl.to("#s10-k2", { y: 200, opacity: 0, duration: 0.4, ease: "power2.in" }, 3.96);
+    tl.fromTo("#s10-k3", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: 420, y: 10, scale: 1, opacity: 1, rotation: 132, duration: 0.55, ease: "power3.out" }, 3.41);
+    tl.to("#s10-k3", { y: 170, opacity: 0, duration: 0.4, ease: "power2.in" }, 3.98);
+    tl.fromTo("#s10-k4", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: -180, y: -300, scale: 1, opacity: 1, rotation: 60, duration: 0.55, ease: "power3.out" }, 3.44);
+    tl.to("#s10-k4", { y: -140, opacity: 0, duration: 0.4, ease: "power2.in" }, 4.00);
+    tl.fromTo("#s10-k5", { x: 0, y: 0, scale: 0.2, opacity: 0, rotation: 0 }, { x: 210, y: -320, scale: 1, opacity: 1, rotation: -96, duration: 0.55, ease: "power3.out" }, 3.47);
+    tl.to("#s10-k5", { y: -160, opacity: 0, duration: 0.4, ease: "power2.in" }, 4.02);
+
+    window.__timelines["s10"] = tl;
+  </script>
+</template>

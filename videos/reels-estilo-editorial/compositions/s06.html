@@ -1,0 +1,47 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 1050px; text-align: center; }
+    .ttl > div { position: relative; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    #s06-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.45) 62%, rgba(0,0,0,.2) 100%); }
+    #s06-title { top: 1030px; }
+    .big { font-size: 190px; line-height: 0.86; }
+  </style>
+  <div id="root" data-composition-id="s06" data-width="1080" data-height="1920">
+    <div id="s06-scrim" class="clip" data-start="0" data-duration="3.1"></div>
+    <div id="s06-c1" class="chip clip" data-start="0" data-duration="1.0"><span>sem precisar</span></div>
+    <div id="s06-c2" class="chip clip" data-start="1.0" data-duration="0.68"><span>largar o</span></div>
+    <div id="s06-title" class="ttl clip" data-start="1.68" data-duration="1.42">
+      <div id="s06-inner">
+        <div id="s06-l1" class="l1 big">canteiro</div>
+        <div id="s06-l2" class="l1 big">de obras</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s06-scrim", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#s06-c1 span", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.16 }, 0.02);
+    tl.fromTo("#s06-l1", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.4, ease: "power2.out" }, 1.7);
+    tl.fromTo("#s06-l2", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.4, ease: "power2.out" }, 2.0);
+    tl.fromTo("#s06-inner", { scale: 1.06 }, { scale: 1, duration: 1.2, ease: "power1.out" }, 1.7);
+    tl.to("#s06-inner", { opacity: 0, y: -18, filter: "blur(10px)", duration: 0.22, ease: "power2.in" }, 2.86);
+    tl.to("#s06-scrim", { opacity: 0, duration: 0.22 }, 2.86);
+
+    window.__timelines["s06"] = tl;
+  </script>
+</template>

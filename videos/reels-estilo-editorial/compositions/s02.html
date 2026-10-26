@@ -1,0 +1,84 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 1050px; text-align: center; }
+    .ttl > div { position: relative; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    #s02-phone { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+    #s02-tilt { position: absolute; left: 250px; top: 1010px; width: 580px; }
+    .bezel { width: 580px; height: 1180px; border-radius: 86px; background: #0b0b0d; padding: 18px;
+             box-shadow: 0 40px 90px rgba(0,0,0,.55), inset 0 0 0 3px #3a3a40, inset 0 0 0 7px #121214; }
+    .screen { position: relative; width: 100%; height: 100%; border-radius: 70px; overflow: hidden;
+              background: radial-gradient(120% 70% at 30% 0%, #3b4a63 0%, #141821 55%, #07080b 100%); }
+    .island { position: absolute; left: 50%; top: 18px; width: 150px; height: 42px; margin-left: -75px; border-radius: 22px; background: #000; }
+    .clock { position: absolute; left: 0; right: 0; top: 84px; text-align: center; font-family: "Inter"; font-weight: 600;
+             font-size: 120px; color: rgba(255,255,255,.92); letter-spacing: -0.03em; }
+    .date { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-family: "Inter"; font-weight: 500; font-size: 26px; color: rgba(255,255,255,.8); }
+    .nt { position: absolute; left: 22px; right: 22px; height: 118px; border-radius: 30px; background: rgba(245,245,247,.9);
+          display: flex; align-items: center; gap: 18px; padding: 0 22px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+    #s02-n0 { top: 254px; } #s02-n1 { top: 386px; } #s02-n2 { top: 518px; } #s02-n3 { top: 650px; }
+    .ic { flex: none; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+          font-family: "Inter"; font-weight: 800; font-size: 24px; color: #fff; }
+    .ic-pix { background: linear-gradient(135deg, #2bd4a4, #0f9f7a); }
+    .ic-cur { background: linear-gradient(135deg, #ff7a45, #e8432f); font-size: 26px; }
+    .tx { flex: 1; min-width: 0; font-family: "Inter"; color: #111; }
+    .hd { display: flex; justify-content: space-between; font-size: 24px; }
+    .hd i { font-style: normal; color: #777; font-size: 20px; font-weight: 500; }
+    .vl { font-size: 30px; font-weight: 800; color: #0f9f6e; margin-top: 2px; }
+    .sb { font-size: 20px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+  <div id="root" data-composition-id="s02" data-width="1080" data-height="1920">
+    <div id="s02-phone" class="clip" data-start="0" data-duration="5.2">
+      <div id="s02-tilt">
+        <div class="bezel">
+          <div class="screen">
+            <div class="island"></div>
+            <div class="clock">9:41</div>
+            <div class="date">segunda-feira, 26 de outubro</div>
+          <div id="s02-n0" class="nt">
+            <div class="ic ic-pix">R$</div>
+            <div class="tx"><div class="hd"><b>Pix recebido</b><i>agora</i></div><div class="vl">R$ 3.800,00</div><div class="sb">Laudo de inspeção predial · Cond. Villa Verde</div></div>
+          </div>
+          <div id="s02-n1" class="nt">
+            <div class="ic ic-cur">▶</div>
+            <div class="tx"><div class="hd"><b>Nova venda</b><i>agora</i></div><div class="vl">R$ 497,00</div><div class="sb">Curso Laudo na Prática</div></div>
+          </div>
+          <div id="s02-n2" class="nt">
+            <div class="ic ic-pix">R$</div>
+            <div class="tx"><div class="hd"><b>Pix recebido</b><i>agora</i></div><div class="vl">R$ 1.200,00</div><div class="sb">Consultoria técnica · vistoria</div></div>
+          </div>
+          <div id="s02-n3" class="nt">
+            <div class="ic ic-cur">▶</div>
+            <div class="tx"><div class="hd"><b>Nova venda</b><i>agora</i></div><div class="vl">R$ 497,00</div><div class="sb">Curso Laudo na Prática</div></div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s02-tilt", { y: 980, rotation: -14, rotationY: 18, transformPerspective: 1600 }, { y: 0, rotation: -5, rotationY: 6, duration: 0.75, ease: "back.out(1.15)" }, 0.85);
+    tl.to("#s02-tilt", { rotation: -3, rotationY: 0, y: -16, duration: 3.1, ease: "sine.inOut" }, 1.6);
+    tl.fromTo("#s02-n0", { opacity: 0, y: -40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.38, ease: "back.out(1.6)" }, 1.86);
+    tl.fromTo("#s02-n1", { opacity: 0, y: -40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.38, ease: "back.out(1.6)" }, 2.63);
+    tl.fromTo("#s02-n2", { opacity: 0, y: -40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.38, ease: "back.out(1.6)" }, 3.4);
+    tl.fromTo("#s02-n3", { opacity: 0, y: -40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.38, ease: "back.out(1.6)" }, 4.25);
+    tl.to("#s02-tilt", { y: 1000, rotation: 6, duration: 0.42, ease: "power3.in" }, 4.72);
+
+    window.__timelines["s02"] = tl;
+  </script>
+</template>

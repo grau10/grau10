@@ -1,0 +1,43 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .nt { position: absolute; left: 0; right: 0; top: 1190px; text-align: center; }
+    .inner { position: relative; display: inline-block; }
+    .n1 { font-family: "Inter"; font-weight: 600; font-size: 74px; line-height: 1; letter-spacing: -0.035em; color: #fff;
+           text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+    .n2 { position: relative; margin-top: 4px; white-space: nowrap; }
+    .na { display: inline-block; font-family: "Inter"; font-weight: 600; font-size: 92px; letter-spacing: -0.04em; color: #DFFF5A;
+           text-shadow: 0 0 22px rgba(223,255,90,.45), 0 4px 20px rgba(0,0,0,.5); }
+    .nb { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 132px; line-height: .9; color: #DFFF5A;
+           padding: 0 26px 0 6px; clip-path: inset(0% 100% 0% 0%);
+           text-shadow: 0 0 26px rgba(223,255,90,.55), 0 4px 20px rgba(0,0,0,.5); }
+    .sw { position: absolute; right: -40px; top: -40px; width: 520px; height: 200px; overflow: visible; pointer-events: none; }
+    .sw path { fill: none; stroke: #DFFF5A; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1;
+                filter: drop-shadow(0 0 6px rgba(223,255,90,.7)); }
+    .dk { position: absolute; left: 90px; right: 90px; background: rgba(14,14,16,.94); border: 1.5px solid rgba(255,255,255,.12);
+           border-radius: 30px; padding: 30px 34px; font-family: "Inter"; color: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.55); }
+    #k01-card { top: 1195px; }
+    .tag { display: inline-block; font-weight: 800; font-size: 28px; letter-spacing: .12em; color: #111; background: #DFFF5A; border-radius: 8px; padding: 6px 12px; }
+    .kt { margin-top: 16px; font-weight: 700; font-size: 50px; letter-spacing: -0.03em; }
+    .ks { margin-top: 8px; font-weight: 500; font-size: 30px; color: #a9a9ae; }
+  </style>
+  <div id="root" data-composition-id="k01" data-width="1080" data-height="1920">
+    <div id="k01-w" class="clip" data-start="0" data-duration="4.9">
+      <div id="k01-card" class="dk">
+        <div class="tag">DOCUMENTO</div>
+        <div class="kt">Laudo cautelar de vizinhança</div>
+        <div class="ks">feito pela construtora &middot; no seu imóvel</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#k01-card", { opacity: 0, y: 70, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.5)" }, 0.9);
+    tl.to("#k01-card", { opacity: 0, y: 30, scale: 0.95, duration: 0.22, ease: "power2.in" }, 4.65);
+
+    window.__timelines["k01"] = tl;
+  </script>
+</template>

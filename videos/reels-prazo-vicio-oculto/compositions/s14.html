@@ -1,0 +1,37 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
+    .ttl > div { position: relative; isolation: isolate; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    #s14-w { position: absolute; left: 0; right: 0; top: 230px; text-align: center; }
+    #s14-word { display: inline-block; transform: rotate(-6deg); }
+    .ch { display: inline-block; font-family: "Archivo Black"; font-size: 190px; line-height: 1; color: #FF3D63; letter-spacing: -0.04em;
+          -webkit-text-stroke: 6px #FF3D63; text-shadow: 0 10px 0 #c21d42, 0 18px 30px rgba(0,0,0,.35); }
+  </style>
+  <div id="root" data-composition-id="s14" data-width="1080" data-height="1920">
+    <div id="s14-w" class="clip" data-start="0" data-duration="1.65" data-layout-allow-overlap>
+      <div id="s14-word"><span id="s14-ch0" class="ch">L</span><span id="s14-ch1" class="ch">A</span><span id="s14-ch2" class="ch">U</span><span id="s14-ch3" class="ch">D</span><span id="s14-ch4" class="ch">O</span><span id="s14-ch5" class="ch">!</span></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(".ch", { scale: 0, y: 60, rotation: -25 }, { scale: 1, y: 0, rotation: 0, duration: 0.42, ease: "back.out(2.6)", stagger: 0.04 }, 0.15);
+    tl.to(".ch", { y: -14, duration: 0.18, ease: "sine.inOut", stagger: { each: 0.03, yoyo: true, repeat: 1 } }, 0.75);
+
+    window.__timelines["s14"] = tl;
+  </script>
+</template>

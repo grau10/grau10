@@ -1,0 +1,47 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
+    .ttl > div { position: relative; isolation: isolate; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    .card { position: absolute; left: 130px; width: 820px; background: #fff; border-radius: 34px; padding: 34px 40px;
+            box-shadow: 0 22px 54px rgba(0,0,0,.45); font-family: "Inter"; color: #111; }
+    #s02-card { top: 960px; }
+    .hd { font-weight: 800; font-size: 46px; display: flex; align-items: center; gap: 16px; }
+    .ico { font-size: 44px; }
+    .track { margin-top: 26px; height: 34px; border-radius: 17px; background: #ececef; overflow: hidden; }
+    .fill { width: 100%; height: 100%; border-radius: 17px; background: #1fbf7a; transform-origin: 0% 50%; }
+    .lb { margin-top: 14px; display: flex; justify-content: space-between; font-weight: 600; font-size: 30px; color: #666; }
+  </style>
+  <div id="root" data-composition-id="s02" data-width="1080" data-height="1920">
+    <div id="s02-w" class="clip" data-start="0" data-duration="4.45">
+      <div id="s02-card" class="card">
+        <div class="hd"><span class="ico">&#9203;</span>Prazo para reclamar</div>
+        <div class="track"><div id="s02-fill" class="fill"></div></div>
+        <div class="lb"><span>hoje</span><span>fim do prazo</span></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s02-card", { opacity: 0, scale: 0.6, y: 60, rotation: -4 }, { opacity: 1, scale: 1, y: 0, rotation: -2, duration: 0.5, ease: "back.out(1.7)" }, 0.1);
+    tl.fromTo("#s02-fill", { scaleX: 1, backgroundColor: "#1fbf7a" }, { scaleX: 0.16, backgroundColor: "#e23b3b", duration: 3.2, ease: "power1.inOut" }, 0.6);
+    tl.to("#s02-card", { rotation: 1, duration: 3.2, ease: "sine.inOut" }, 0.6);
+    tl.to("#s02-card", { opacity: 0, scale: 0.7, y: 40, duration: 0.2, ease: "power2.in" }, 4.2);
+
+    window.__timelines["s02"] = tl;
+  </script>
+</template>

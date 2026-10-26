@@ -1,0 +1,74 @@
+<template>
+  <style>
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif.woff2") format("woff2"); font-style: normal; font-weight: 400; }
+    @font-face { font-family: "Instrument Serif"; src: url("assets/fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-weight: 400; }
+    @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black.woff2") format("woff2"); font-weight: 400; }
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; background: transparent; }
+    .ttl { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
+    .ttl > div { position: relative; isolation: isolate; }
+    .ttl > div::before { content: ""; position: absolute; left: 50%; top: 50%; width: 1000px; height: 440px; margin: -220px 0 0 -500px; z-index: -1;
+          background: radial-gradient(ellipse at center, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 70%); }
+    .l1 { font-family: "Instrument Serif"; font-size: 124px; line-height: 0.95; color: #fff; letter-spacing: -0.01em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); }
+    .l2 { display: inline-block; font-family: "Instrument Serif"; font-style: italic; font-size: 168px; line-height: 0.95;
+          color: #F5D90A; padding: 0 40px; clip-path: inset(0% 100% 0% 0%); margin-top: -18px; letter-spacing: -0.015em;
+          text-shadow: 0 6px 34px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.55); }
+    .chip { position: absolute; left: 50%; top: 1170px; transform: translateX(-50%); }
+    .chip span { display: inline-block; background: rgba(12,12,12,.86); color: #fff; font-family: "Inter"; font-weight: 600;
+          font-size: 40px; padding: 10px 22px 12px; border-radius: 10px; white-space: nowrap; }
+    #s04-w { position: absolute; left: 0; right: 0; top: 950px; height: 330px; perspective: 1500px; }
+    #s04-pop { position: absolute; left: 50%; top: 0; width: 660px; height: 300px; margin-left: -330px; transform-style: preserve-3d; }
+    #s04-cube { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .face { position: absolute; inset: 0; background: #fff; border-radius: 34px; padding: 56px 36px 0; text-align: center;
+            box-shadow: 0 18px 44px rgba(0,0,0,.35); backface-visibility: hidden; }
+    .f0 { transform: rotateY(0deg) translateZ(330px); }  .f1 { transform: rotateY(90deg) translateZ(330px); }
+    .f2 { transform: rotateY(180deg) translateZ(330px); } .f3 { transform: rotateY(270deg) translateZ(330px); }
+    .f1, .f2, .f3 { opacity: 0; }
+    .av { position: absolute; left: 50%; top: -38px; width: 76px; height: 76px; margin-left: -38px; border-radius: 50%;
+          background: linear-gradient(135deg, #f5d90a, #8b1a1a); border: 5px solid #fff; }
+    .q { font-family: "Inter"; font-weight: 700; font-size: 36px; line-height: 1.18; color: #111; }
+    .inp { margin: 22px auto 0; width: 440px; height: 60px; border-radius: 16px; background: #efeff1; color: #9a9aa0;
+           font-family: "Inter"; font-weight: 500; font-size: 28px; line-height: 60px; }
+  </style>
+  <div id="root" data-composition-id="s04" data-width="1080" data-height="1920">
+    <div id="s04-w" class="clip" data-start="0" data-duration="6.4" data-layout-allow-overlap>
+      <div id="s04-pop">
+        <div id="s04-cube">
+          <div id="s04-f0" class="face f0">
+            <div class="av"></div>
+            <div class="q">Depois que achei um vício oculto, não posso mais reclamar?</div>
+            <div class="inp">Digite algo...</div>
+          </div>
+          <div id="s04-f1" class="face f1">
+            <div class="av"></div>
+            <div class="q">Depois que achei um vício oculto, não posso mais reclamar?</div>
+            <div class="inp">Digite algo...</div>
+          </div>
+          <div id="s04-f2" class="face f2">
+            <div class="av"></div>
+            <div class="q">Depois que achei um vício oculto, não posso mais reclamar?</div>
+            <div class="inp">Digite algo...</div>
+          </div>
+          <div id="s04-f3" class="face f3">
+            <div class="av"></div>
+            <div class="q">Depois que achei um vício oculto, não posso mais reclamar?</div>
+            <div class="inp">Digite algo...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.set("#s04-cube", { z: -330 }, 0);
+    tl.fromTo("#s04-pop", { opacity: 0, scale: 0.55, rotationX: 35 }, { opacity: 1, scale: 1, rotationX: 8, duration: 0.5, ease: "back.out(1.7)" }, 0.12);
+    tl.to("#s04-pop", { rotationX: -4, rotationY: -10, duration: 3.2, ease: "sine.inOut" }, 0.62);
+    tl.to(["#s04-f1", "#s04-f2", "#s04-f3"], { opacity: 1, duration: 0.2 }, 4.6);
+    tl.to("#s04-pop", { scale: 0.78, rotationX: 18, duration: 0.4, ease: "power2.out" }, 4.6);
+    tl.fromTo("#s04-cube", { rotationY: 0 }, { rotationY: -450, duration: 1.25, ease: "power3.inOut" }, 4.65);
+    tl.to("#s04-pop", { opacity: 0, scale: 0.4, y: -60, duration: 0.18, ease: "power2.in" }, 6.15);
+
+    window.__timelines["s04"] = tl;
+  </script>
+</template>

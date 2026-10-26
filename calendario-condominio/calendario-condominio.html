@@ -407,9 +407,9 @@ body.painel{padding-block:0}
   </div>
 
   <div class="chips" id="filters">
-    <button class="chip c-preventiva" data-cat="preventiva" aria-pressed="true"><span class="dot"></span>Preventiva</button>
-    <button class="chip c-corretiva" data-cat="corretiva" aria-pressed="true"><span class="dot"></span>Corretiva</button>
-    <button class="chip c-outras" data-cat="outras" aria-pressed="true"><span class="dot"></span>Outras</button>
+    <button class="chip c-preventiva" data-cat="preventiva" aria-pressed="true"><span class="dot"></span>Programada</button>
+    <button class="chip c-corretiva" data-cat="corretiva" aria-pressed="true"><span class="dot"></span>Reparo</button>
+    <button class="chip c-outras" data-cat="outras" aria-pressed="true"><span class="dot"></span>Vistorias e obrigações</button>
   </div>
 
   <div id="banner"></div>
@@ -446,11 +446,11 @@ const PER = {
   semestral:{l:"Semestral",m:6}, anual:{l:"Anual",m:12}, bienal:{l:"A cada 2 anos",m:24},
   trienal:{l:"A cada 3 anos",m:36}, quinquenal:{l:"A cada 5 anos",m:60}
 };
-const CAT = {preventiva:"Manutenção preventiva", corretiva:"Manutenção corretiva", outras:"Outras"};
+const CAT = {preventiva:"Manutenção programada", corretiva:"Reparo", outras:"Vistorias e obrigações"};
 const CAT_DESC = {
-  preventiva:"Programada pelo manual para evitar falhas e preservar o desempenho.",
-  corretiva:"Reparo de falha ou anomalia já identificada.",
-  outras:"Inspeções, laudos, controle sanitário e obrigações legais ligadas às áreas comuns."
+  preventiva:"Cuidados de rotina com data marcada no manual do edifício, feitos para evitar defeitos (antes chamada de manutenção preventiva).",
+  corretiva:"Conserto de algo que já apresentou defeito ou dano (antes chamada de manutenção corretiva).",
+  outras:"Vistorias, laudos, certificados e exigências legais, como Corpo de Bombeiros e vigilância sanitária."
 };
 const SISTEMAS = ["Reservatórios e água potável","Instalações hidrossanitárias","Combate a incêndio","SPDA (para-raios)","Elevadores","Bombas e motores","Gerador","Portões e acessos","Cobertura e impermeabilização","Fachada e revestimentos","Instalações elétricas","Lazer e playground","Piscina","Jardins e áreas externas","Estrutura","Esquadrias e vidros","Pisos e garagem","Gestão do condomínio"];
 
@@ -476,7 +476,7 @@ const TEMPLATE = [
  {k:"spda",s:"SPDA (para-raios)",t:"Inspeção e medição do SPDA",c:"preventiva",p:"anual",r:"Engenheiro eletricista / empresa especializada",ref:"NBR 5419",
   como:"Inspecionar captores, descidas e conexões.\nMedir continuidade e resistência de aterramento.\nEmitir laudo com ART.",
   pq:"Conexões corroídas tornam o para-raios ineficaz e expõem a edificação e os equipamentos a descargas atmosféricas."},
- {k:"elev",s:"Elevadores",t:"Manutenção preventiva dos elevadores",c:"preventiva",p:"mensal",r:"Empresa conservadora habilitada",ref:"NBR 16083 · contrato de conservação",
+ {k:"elev",s:"Elevadores",t:"Manutenção mensal dos elevadores",c:"preventiva",p:"mensal",r:"Empresa conservadora habilitada",ref:"NBR 16083 · contrato de conservação",
   como:"Acompanhar a visita mensal da conservadora.\nConferir o relatório da visita e itens pendentes.\nVerificar o funcionamento do alarme e do interfone da cabina.",
   pq:"A manutenção mensal por empresa habilitada é obrigatória e evita paradas, aprisionamentos e acidentes."},
  {k:"bombas",s:"Bombas e motores",t:"Verificação e alternância das bombas de recalque",c:"preventiva",p:"mensal",r:"Zelador / equipe local",ref:"NBR 5674 · manual do fabricante",
@@ -547,7 +547,7 @@ const S = {
   cursor: (() => { const t = todayD(); return new Date(t.getFullYear(), t.getMonth(), 1, 12); })(),
   sel: ymd(todayD()), view: lsGet("cal.view") === "agenda" ? "agenda" : "mes",
   cats: new Set(["preventiva","corretiva","outras"]), open:null, names:{},
-  tab: ["calendario","visao","edificio"].includes(lsGet("cal.tab")) ? lsGet("cal.tab") : "calendario", ed:{}, assets:null, delDoc:null, envios:[], downloads:null, ultimoBackup:null
+  tab: ["calendario","visao","edificio"].includes(lsGet("cal.tab")) ? lsGet("cal.tab") : "calendario", ed:{}, assets:null, delDoc:null, envios:[], downloads:null, ultimoBackup:null, ordens:[]
 };
 const podeEditar = () => !!S.db && !S.writeRefused && S.canWrite !== false && (S.isOwner || (S.myId && S.equipe.includes(S.myId)));
 
@@ -590,7 +590,7 @@ function nextOcc(a, after){
 }
 
 /* ---------- renderização ---------- */
-const CAT_SHORT = {preventiva:"Preventiva", corretiva:"Corretiva", outras:"Outras"};
+const CAT_SHORT = {preventiva:"Programada", corretiva:"Reparo", outras:"Vistoria"};
 const DIAS_LONG = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const longDay = k => { const d = parse(k); return d ? `${cap(DIAS_LONG[d.getDay()])}, ${d.getDate()} de ${MESES[d.getMonth()]}` : ""; };
@@ -694,7 +694,7 @@ function openSheet(type, data){ S.open = {type, ...data}; drawSheet(); }
 function closeSheet(){ S.open = null; $("#overlay").innerHTML = ""; }
 function drawSheet(){
   if (!S.open) return;
-  ({detail:renderDetail, form:renderForm, import:renderImport, team:renderTeam, config:renderConfig, menu:renderMenu, search:renderSearch, edificio:renderEdForm, doc:renderDocForm, envio:renderEnvio, livro:renderLivro, restore:renderRestore})[S.open.type]();
+  ({detail:renderDetail, form:renderForm, import:renderImport, team:renderTeam, config:renderConfig, menu:renderMenu, search:renderSearch, edificio:renderEdForm, doc:renderDocForm, envio:renderEnvio, livro:renderLivro, restore:renderRestore, os:renderOS})[S.open.type]();
 }
 function shell(title, body){
   const prevScroll = $("#overlay .sheet")?.scrollTop || 0, same = $("#overlay .sheet")?.dataset.key === S.open?.type;
@@ -760,6 +760,7 @@ async function renderDetail(){
       <h2 class="d-title">${esc(a.titulo)}</h2>
       <p class="d-status">${stTxt} · ${longDay(oc)} de ${oc.slice(0,4)}</p>
     </div>
+    ${S.db && st !== "done" ? `<button class="btn" data-os="${esc(a.id)}" data-oc="${esc(oc)}" style="align-self:flex-start">Gerar ordem de serviço</button>` : ""}
     <div class="facts">
       <div class="fact"><span>Periodicidade</span><b>${esc(PER[a.periodicidade]?.l || "—")}</b></div>
       <div class="fact"><span>Próximas datas</span><b class="num">${prox.length ? prox.map(fmtD).join(" · ") : "—"}</b></div>
@@ -771,6 +772,7 @@ async function renderDetail(){
     <div class="blk"><h3>Por que fazer</h3><p>${esc(a.porque || "—")}</p></div>
     <div class="blk"><h3>Como fazer</h3>${stepsHTML(a.como)}</div>
     <div class="hr"></div>
+    ${osListHTML(a.id)}
     <div class="blk"><h3>Bloco de notas</h3>
       <p class="notes-sum">${regs.length ? `${regs.length} registro${regs.length===1?"":"s"} · total <b class="num" style="color:var(--ink)">${brl(total) || "R$ 0,00"}</b>` : "Registre quem executou, quanto custou, notas fiscais, garantias e observações do serviço."}</p>
       ${notes}${form}
@@ -956,10 +958,10 @@ function renderVisao(){
       <p class="summary">Últimos 12 meses, de ${MESES[D.months[0].getMonth()]} de ${D.months[0].getFullYear()} até hoje. Todas as classificações.</p></div>
 
     <div class="kpis">
-      <div class="kpi"><span>Preventivas em dia</span><b class="num">${conf == null ? "—" : conf + "%"}</b><small>${D.prevTotal ? `${D.prevDone} de ${D.prevTotal} ocorrências concluídas` : "Nenhuma ocorrência vencida no período"}</small></div>
+      <div class="kpi"><span>Programadas em dia</span><b class="num">${conf == null ? "—" : conf + "%"}</b><small>${D.prevTotal ? `${D.prevDone} de ${D.prevTotal} ocorrências concluídas` : "Nenhuma ocorrência vencida no período"}</small></div>
       <div class="kpi"><span>Atrasadas</span><b class="num ${D.late.length ? "crit" : ""}">${D.late.length}</b><small>${D.late.length ? "sem registro de conclusão" : "tudo em dia"}</small></div>
       <div class="kpi"><span>Próximos 30 dias</span><b class="num">${D.prox.length}</b><small>atividades previstas</small></div>
-      <div class="kpi"><span>Custo registrado</span><b class="num">${brl(D.cost) || "R$ 0,00"}</b><small>${D.cost ? `${Math.round(D.costBy.corretiva / D.cost * 100)}% em corretivas` : "nenhum custo anotado"}</small></div>
+      <div class="kpi"><span>Custo registrado</span><b class="num">${brl(D.cost) || "R$ 0,00"}</b><small>${D.cost ? `${Math.round(D.costBy.corretiva / D.cost * 100)}% em reparos` : "nenhum custo anotado"}</small></div>
     </div>
 
     <div class="card">
@@ -1388,7 +1390,7 @@ async function logEnvio(){
 const slug = s => (String(s || "condominio").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").toLowerCase() || "condominio");
 function livroJSON(){
   return JSON.stringify({formato:"livro-manutencao", versao:1, exportadoEm:new Date().toISOString(), condominio:S.nome || "",
-    edificio:S.ed || {}, atividades:[...S.atividades.values()], registros:S.registros, envios:S.envios}, null, 2);
+    edificio:S.ed || {}, atividades:[...S.atividades.values()], registros:S.registros, envios:S.envios, ordens:S.ordens}, null, 2);
 }
 function livroCSV(){
   const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
@@ -1423,6 +1425,8 @@ ${acts.map(a => `<tr><td><b>${esc(a.titulo)}</b><br><span class="sub">${esc(a.po
 ${regs.map(r => { const a = S.atividades.get(r.atividadeId) || {}; return `<tr><td>${fmtD(r.ocorrencia)}${r.concluida ? "<br><span class='sub'>concluída</span>" : ""}</td><td>${esc(a.titulo || "(atividade excluída)")}</td><td>${esc(r.executor || "")}</td><td class="r">${typeof r.custo === "number" ? brl(r.custo) : ""}</td><td><pre>${esc(r.texto || "")}</pre></td></tr>`; }).join("")}</table>
 <h2>Solicitações enviadas à administradora (${S.envios.length})</h2><table><tr><th>Data</th><th>Período</th><th class="r">Ocorrências</th></tr>
 ${S.envios.slice().sort((a,b) => (a.criadoEm||0) - (b.criadoEm||0)).map(h => `<tr><td>${h.criadoEm ? new Date(h.criadoEm).toLocaleDateString("pt-BR") : ""}</td><td>${esc(h.periodo || "")}</td><td class="r">${h.itens ?? ""}</td></tr>`).join("")}</table>
+<h2>Ordens de serviço (${S.ordens.length})</h2><table><tr><th>Nº</th><th>Emissão</th><th>Serviço</th><th>Data prevista</th><th>Prioridade</th></tr>
+${S.ordens.slice().sort((a,b) => (a.criadoEm||0) - (b.criadoEm||0)).map(o => `<tr><td>${esc(o.numero)}</td><td>${o.criadoEm ? new Date(o.criadoEm).toLocaleDateString("pt-BR") : ""}</td><td>${esc(S.atividades.get(o.atividadeId)?.titulo || "")}</td><td>${fmtD(o.ocorrencia)}</td><td>${esc(PRIO[o.prioridade] || "")}</td></tr>`).join("")}</table>
 <h2>Documentos</h2><table>${(e.documentos || []).map(d => `<tr><td>${esc(d.nome || d.tipo)}</td><td>${esc(d.tipo || "")}</td><td>${d.validade ? "Validade " + fmtD(d.validade) : ""}</td></tr>`).join("") || "<tr><td>Nenhum documento cadastrado.</td></tr>"}</table>
 </body></html>`;
 }
@@ -1447,6 +1451,7 @@ function renderLivro(){
       <div class="fact"><span>Atividades no plano</span><b class="num">${S.atividades.size}</b></div>
       <div class="fact"><span>Registros de execução</span><b class="num">${S.registros.length}</b></div>
       <div class="fact"><span>Solicitações à administradora</span><b class="num">${S.envios.length}</b></div>
+      <div class="fact"><span>Ordens de serviço emitidas</span><b class="num">${S.ordens.length}</b></div>
       <div class="fact"><span>Última cópia de segurança</span><b>${S.ultimoBackup ? new Date(S.ultimoBackup).toLocaleDateString("pt-BR") + (dias > 30 ? ` <span class="st warn">! há ${dias} dias</span>` : "") : `<span class="st warn">! Nunca feita</span>`}</b></div>
     </div>
     <div class="menu">
@@ -1476,7 +1481,7 @@ async function readRestore(file){
   try {
     const j = JSON.parse(await file.text());
     if (j?.formato !== "livro-manutencao" || !Array.isArray(j.atividades)) throw 0;
-    restoreData = {...j, registros:Array.isArray(j.registros) ? j.registros : [], envios:Array.isArray(j.envios) ? j.envios : []};
+    restoreData = {...j, registros:Array.isArray(j.registros) ? j.registros : [], envios:Array.isArray(j.envios) ? j.envios : [], ordens:Array.isArray(j.ordens) ? j.ordens : []};
     renderRestore();
   } catch { renderRestore(); $("#rErr").textContent = "Este arquivo não é uma cópia de segurança do calendário."; }
 }
@@ -1486,7 +1491,8 @@ async function doRestore(){
   const jobs = [
     ...d.atividades.filter(a => okId(a.id)).map(a => ["atividades/" + a.id, a]),
     ...d.registros.filter(r => okId(r.id)).map(r => ["registros/" + r.id, r]),
-    ...d.envios.filter(h => okId(h.id)).map(h => ["envios/" + h.id, h])
+    ...d.envios.filter(h => okId(h.id)).map(h => ["envios/" + h.id, h]),
+    ...d.ordens.filter(h => okId(h.id)).map(h => ["ordens/" + h.id, h])
   ];
   if (d.edificio && typeof d.edificio === "object") jobs.push(["config/edificio", d.edificio]);
   if (d.condominio) jobs.push(["config/geral", {nome:String(d.condominio)}]);
@@ -1497,6 +1503,100 @@ async function doRestore(){
     n++; btn.textContent = `Importando ${n}/${jobs.length}…`;
   }
   restoreData = null; closeSheet(); render();
+}
+/* ---------- ordem de serviço ---------- */
+const PRIO = {urgente:"Urgente", alta:"Alta", normal:"Normal"};
+function osPrioridade(a, oc){
+  if (status(a.id, oc) === "late") return "urgente";
+  return a.categoria === "corretiva" ? "alta" : "normal";
+}
+function osNumero(){
+  const ano = todayD().getFullYear();
+  const n = S.ordens.filter(o => String(o.numero || "").startsWith(ano + "/")).map(o => +String(o.numero).split("/")[1] || 0);
+  return `${ano}/${String((n.length ? Math.max(...n) : 0) + 1).padStart(3, "0")}`;
+}
+function osTexto(o){
+  const a = o.a, late = status(a.id, o.oc) === "late";
+  const passos = String(a.como || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const L = [];
+  L.push(`*ORDEM DE SERVIÇO Nº ${o.numero}*`);
+  L.push(`*${S.nome || "Condomínio"}*${S.ed?.endereco ? " · " + S.ed.endereco : ""}`);
+  L.push(`Emitida em ${fmtD(ymd(todayD()))} · Prioridade: *${PRIO[o.prio]}*`);
+  L.push("");
+  L.push(`*Serviço:* ${a.titulo}`);
+  L.push(`*Tipo:* ${CAT[a.categoria]}`);
+  if (a.sistema) L.push(`*Local / sistema:* ${a.sistema}`);
+  L.push(`*${late ? "Data prevista (já vencida)" : "Data prevista"}:* ${fmtD(o.oc)}`);
+  if (a.responsavel) L.push(`*Quem executa:* ${a.responsavel}`);
+  if (passos.length){ L.push(""); L.push("*O que deve ser feito:*"); passos.forEach((p, i) => L.push(`${i+1}. ${p}`)); }
+  if (a.porque){ L.push(""); L.push(`*Por que é necessário:* ${a.porque}`); }
+  if (a.referencia || a.manual) L.push(`*Referência técnica:* ${[a.manual && "Manual, " + a.manual, a.referencia].filter(Boolean).join(" · ")}`);
+  if (o.obs){ L.push(""); L.push(`*Observações do(a) síndico(a):* ${o.obs}`); }
+  L.push("");
+  L.push(`Favor providenciar orçamento e agendamento e confirmar a data com o(a) síndico(a). Após a execução, enviar nota fiscal, garantia e relatório do serviço para arquivo no histórico do edifício.`);
+  L.push("");
+  L.push(`Solicitante: ${S.ed?.sindico?.nome || "Síndico(a)"} · Síndico(a)`);
+  L.push(`Acompanhe: ${(S.ed?.linkAcesso && /^https?:\/\//.test(S.ed.linkAcesso)) ? S.ed.linkAcesso : DEFAULT_LINK}`);
+  return L.join("\n");
+}
+function osHTML(o){
+  const a = o.a, passos = String(a.como || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const row = (l, v) => v ? `<tr><th>${l}</th><td>${esc(v)}</td></tr>` : "";
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>OS ${esc(o.numero)} · ${esc(S.nome || "")}</title>
+<style>body{font-family:Helvetica,Arial,sans-serif;color:#222;max-width:760px;margin:40px auto;padding:0 24px;font-size:14px;line-height:1.5}
+.top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #222;padding-bottom:10px}h1{margin:0;font-size:26px}
+.sub{color:#6a6a6a}table{border-collapse:collapse;width:100%;margin-top:16px}th,td{text-align:left;vertical-align:top;padding:8px 10px 8px 0;border-bottom:1px solid #ddd}
+th{width:190px;color:#6a6a6a;font-weight:600}h2{font-size:16px;margin:24px 0 6px}.sig{display:flex;gap:40px;margin-top:60px}.sig div{flex:1;border-top:1px solid #222;padding-top:6px;font-size:12px;color:#6a6a6a}</style></head><body>
+<div class="top"><div><div class="sub">${esc(S.nome || "")}${S.ed?.endereco ? " · " + esc(S.ed.endereco) : ""}</div><h1>Ordem de serviço nº ${esc(o.numero)}</h1></div><div class="sub">Emitida em ${fmtD(ymd(todayD()))}</div></div>
+<table>${row("Serviço", a.titulo)}${row("Tipo", CAT[a.categoria])}${row("Local / sistema", a.sistema)}${row("Data prevista", fmtD(o.oc) + (status(a.id, o.oc) === "late" ? " (vencida)" : ""))}${row("Prioridade", PRIO[o.prio])}${row("Quem executa", a.responsavel)}${row("Referência técnica", [a.manual && "Manual, " + a.manual, a.referencia].filter(Boolean).join(" · "))}${row("Administradora", S.ed?.administradora?.nome)}</table>
+${passos.length ? `<h2>O que deve ser feito</h2><ol>${passos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : ""}
+${a.porque ? `<h2>Por que é necessário</h2><p>${esc(a.porque)}</p>` : ""}${o.obs ? `<h2>Observações do(a) síndico(a)</h2><p>${esc(o.obs)}</p>` : ""}
+<h2>Execução (preencher pelo prestador)</h2><table>${["Empresa / profissional","Data de execução","Valor","Garantia","Observações"].map(l => `<tr><th>${l}</th><td>&nbsp;</td></tr>`).join("")}</table>
+<div class="sig"><div>Síndico(a): ${esc(S.ed?.sindico?.nome || "")}</div><div>Administradora</div><div>Prestador do serviço</div></div></body></html>`;
+}
+function renderOS(){
+  const o = S.open, a = S.atividades.get(o.id);
+  if (!a){ shell("Ordem de serviço", `<p>Esta atividade não existe mais.</p>`); return; }
+  o.a = a; o.oc = o.oc || nextOcc(a, todayD()) || a.data; o.prio = o.prio || osPrioridade(a, o.oc); o.obs = o.obs ?? ""; o.numero = o.saved?.numero || osNumero();
+  const txt = osTexto(o), ph = adminPhone(), wa = `https://wa.me/${ph}?text=${encodeURIComponent(txt)}`;
+  shell(`Ordem de serviço nº ${o.numero}`, `
+    <div><div class="d-cat c-${a.categoria}"><span class="dot"></span>${CAT[a.categoria]}</div><h2 class="d-title">${esc(a.titulo)}</h2>
+      <p class="d-status">Data prevista: <b>${fmtD(o.oc)}</b>${status(a.id, o.oc) === "late" ? ` · <b class="late">vencida</b>` : ""}</p></div>
+    <div class="form">
+      <label class="fld"><span>Prioridade</span><select id="osPrio">${Object.keys(PRIO).map(k => `<option value="${k}" ${o.prio === k ? "selected" : ""}>${PRIO[k]}</option>`).join("")}</select></label>
+      <label class="fld"><span>Enviar para</span><input value="${esc(S.ed?.administradora?.nome || "Administradora")}" disabled></label>
+      <label class="fld full"><span>Observação (opcional)</span><textarea id="osObs" maxlength="600" placeholder="Ex.: preferência por manhã; avisar moradores do bloco B">${esc(o.obs)}</textarea></label>
+    </div>
+    <div class="msgbox"><div class="msgmeta">Prévia da mensagem</div><pre id="msgText">${esc(txt)}</pre></div>
+    <div class="actions" style="justify-content:flex-start">
+      <a class="btn" href="${esc(wa)}" target="_blank" rel="noopener" id="osWa">${ph ? "Enviar à administradora pelo WhatsApp" : "Enviar pelo WhatsApp"}</a>
+      <button class="btn sec" id="osCopy">Copiar</button>
+      ${S.downloads ? `<button class="btn sec" id="osPdf">Baixar para imprimir</button>` : ""}
+    </div>
+    <p class="hint" id="osMsg">${o.saved ? `Registrada no histórico em ${new Date(o.saved.criadoEm).toLocaleDateString("pt-BR")}.` : "Ao enviar, copiar ou baixar, a ordem fica registrada no histórico do edifício."}</p>
+    ${!ph ? `<p class="hint">Cadastre o telefone da administradora em Edifício para o WhatsApp abrir direto na conversa dela.</p>` : ""}`);
+}
+async function osRegistrar(){
+  const o = S.open; if (o.saved || !S.db || !podeEditar()) return;
+  const body = {numero:o.numero, atividadeId:o.a.id, ocorrencia:o.oc, prioridade:o.prio, obs:o.obs, texto:osTexto(o), destino:S.ed?.administradora?.nome || "administradora", autor:S.myId, criadoEm:Date.now()};
+  try { const ref = S.db.collection("ordens").doc(); await ref.set({...body, id:ref.id}); o.saved = {...body, id:ref.id}; const m = $("#osMsg"); if (m) m.textContent = "Ordem registrada no histórico do edifício."; }
+  catch { const m = $("#osMsg"); if (m) m.textContent = "Não foi possível registrar a ordem no histórico."; }
+}
+async function osCopy(){
+  try { await navigator.clipboard.writeText($("#msgText").textContent); $("#osMsg").textContent = "Mensagem copiada."; }
+  catch { const r = document.createRange(); r.selectNodeContents($("#msgText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("#osMsg").textContent = "Texto selecionado. Use Copiar do seu aparelho."; }
+  osRegistrar();
+}
+async function osPdf(){
+  const o = S.open;
+  try { await S.downloads.save({filename:`OS-${o.numero.replace("/","-")}-${slug(S.nome)}.html`, data:osHTML(o)}); osRegistrar(); }
+  catch (e){ if (e?.code !== "declined") $("#osMsg").textContent = "Não foi possível gerar o arquivo."; }
+}
+function osListHTML(id){
+  const list = S.ordens.filter(o => o.atividadeId === id).sort((a,b) => (b.criadoEm||0) - (a.criadoEm||0));
+  if (!list.length) return "";
+  return `<div class="blk"><h3>Ordens de serviço</h3>${list.map(o => { const feito = done(o.atividadeId, o.ocorrencia);
+    return `<div class="fact"><span>Nº ${esc(o.numero)} · ${o.criadoEm ? new Date(o.criadoEm).toLocaleDateString("pt-BR") : ""} · para ${fmtD(o.ocorrencia)}</span><b>${feito ? `<span class="st ok">✓ Executada</span>` : `<span class="st warn">Aguardando execução</span>`}</b></div>`; }).join("")}</div>`;
 }
 /* ---------- escrita ---------- */
 async function guard(fn, errEl){
@@ -1588,12 +1688,16 @@ function go(where){
   if (where === "restore"){ restoreData = null; return openSheet("restore", {}); }
 }
 document.addEventListener("click", async ev => {
+  if (ev.target.closest("#osWa")){ osRegistrar(); return; }
   const el = ev.target.closest("button,[data-close],[data-kstage]");
   if (!el) return;
   if (el.dataset.kstage !== undefined){ slide = 0; renderKiosk(); scheduleSlide(); return; }
   if (el.dataset.tab) return setTab(el.dataset.tab);
   if (el.dataset.addrow){ const k = el.dataset.addrow; S.edDraft[k].push(k === "infra" ? {sistema:"", descricao:"", local:""} : k === "sindicosAnteriores" ? {nome:"", periodo:""} : {funcao:"", nome:"", contato:""}); return renderEdForm(); }
   if (el.dataset.rmrow){ S.edDraft[el.dataset.rmrow].splice(+el.dataset.i, 1); return renderEdForm(); }
+  if (el.dataset.os) return openSheet("os", {id:el.dataset.os, oc:el.dataset.oc});
+  if (el.id === "osCopy") return osCopy();
+  if (el.id === "osPdf") return osPdf();
   if (el.dataset.kind){ S.open.kind = el.dataset.kind; return renderEnvio(); }
   if (el.dataset.exp) return exportar(el.dataset.exp);
   if (el.id === "copyMsg") return copyMsg();
@@ -1639,6 +1743,7 @@ document.addEventListener("click", async ev => {
   }
 });
 document.addEventListener("change", ev => {
+  if (ev.target.id === "osPrio"){ S.open.prio = ev.target.value; renderOS(); }
   if (ev.target.id === "oAtr"){ S.open.atrasadas = ev.target.checked; renderEnvio(); }
   if (ev.target.id === "oPq"){ S.open.porque = ev.target.checked; renderEnvio(); }
   if (ev.target.id === "rFile" && ev.target.files?.[0]) readRestore(ev.target.files[0]);
@@ -1659,6 +1764,7 @@ document.addEventListener("input", async ev => {
   const d = ev.target.dataset;
   if (d.ef && S.edDraft) return setPath(S.edDraft, d.ef, ev.target.value);
   if (d.list && S.edDraft){ S.edDraft[d.list][+d.i][d.f] = ev.target.value; return; }
+  if (ev.target.id === "osObs"){ S.open.obs = ev.target.value; $("#msgText").textContent = osTexto(S.open); const w = $("#osWa"); if (w) w.href = `https://wa.me/${adminPhone()}?text=${encodeURIComponent(osTexto(S.open))}`; return; }
   if (ev.target.id === "sQ"){ S.open.q = ev.target.value; return drawSearchResults(ev.target.value); }
   if (ev.target.id !== "tSearch" || !S.user) return;
   const hits = await S.user.search(ev.target.value.trim());
@@ -1713,6 +1819,7 @@ if (location.hash === "#painel") enterKiosk();
     S.loaded.r = true; render();
   }, onErr);
   db.doc("config/equipe").onSnapshot(s => { const m = s.exists ? s.data().membros : []; S.equipe = Array.isArray(m) ? m.filter(x => typeof x === "string") : []; render(); if (S.open?.type === "team") renderTeam(); }, onErr);
+  db.collection("ordens").onSnapshot(snap => { S.ordens = snap.docs.map(d => ({...d.data(), id:d.id})); if (S.open?.type === "detail") renderDetail(); }, onErr);
   db.collection("envios").onSnapshot(snap => { S.envios = snap.docs.map(d => ({...d.data(), id:d.id})); if (S.open?.type === "livro") renderLivro(); }, onErr);
   db.doc("config/backup").onSnapshot(s => { S.ultimoBackup = s.exists ? Number(s.data().ultimo) || null : null; if (S.tab === "edificio") renderEdificio(); }, onErr);
   db.doc("config/edificio").onSnapshot(s => { S.ed = s.exists ? s.data() : {}; render(); }, onErr);

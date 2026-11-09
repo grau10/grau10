@@ -8,10 +8,12 @@
   - Exemplos, histórias e chamadas pensados para a realidade da mulher na engenharia.
   - Sem excluir os homens: o conteúdo técnico vale para todos; só a voz e o tom são femininos.
 
-## Contexto do negócio
+## Foco do conteúdo do Instagram
 
-- Empresa de engenharia: laudo particular, diagnóstico e gerenciamento de obras corretivas.
-- Objetivo: escalar em condomínios e vender no online o ensino de um tipo específico de laudo para engenheiras civis e arquitetas.
+- **100% no curso "Formação Perita Particular".** Todo post, legenda e ideia de conteúdo serve a esse curso.
+- Público-alvo: profissionais da engenharia civil (não pedreiros, mestres de obra, síndicos ou leigos).
+- Ao analisar desempenho, considerar apenas sinais de público profissional da engenharia civil.
+- Não usar o calendário de manutenção de condomínio (`calendario-condominio/`) como referência de conteúdo; é outro projeto.
 
 ## Publicação
 

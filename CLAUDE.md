@@ -147,3 +147,8 @@ Títulos e roteiros já aprovados são o ponto de partida; manter assuntos e ada
 - Instagram @engmonike conectado ao Metricool (plano gratuito); agendar posts pelo conector do Metricool.
 - Fuso horário: America/Sao_Paulo.
 - Não usar o calendário de manutenção de condomínio (`calendario-condominio/`) como referência de conteúdo; é outro projeto.
+
+## Edição de vídeo
+
+- Vídeos brutos da Monike são editados pelo agente `editor-de-video` (`.claude/agents/editor-de-video.md`), que segue a skill `editar-reels` (`.claude/skills/editar-reels/SKILL.md`) e usa `tools/editar_reels.py`.
+- Nunca publicar ou agendar um vídeo sem a Monike aprovar a versão final.

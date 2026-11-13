@@ -1,0 +1,7 @@
+{
+  "appId": "br.com.englink.sindico",
+  "appName": "EngLink Síndico",
+  "webDir": "app",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "always" }
+}

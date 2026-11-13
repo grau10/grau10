@@ -907,7 +907,7 @@ function drawSearchResults(q){
 }
 /* ---------- abas ---------- */
 const TABS = ["calendario","visao","edificio"];
-const DEFAULT_LINK = "https://claude.ai/artifact/PGTQE8oM7WEx1iUApxCdUP";
+const DEFAULT_LINK = window.__ENGLINK_APP_URL || "https://claude.ai/artifact/PGTQE8oM7WEx1iUApxCdUP";
 function setTab(t){
   if (!TABS.includes(t)) t = "calendario";
   S.tab = t; lsSet("cal.tab", t); render(); window.scrollTo({top:0});

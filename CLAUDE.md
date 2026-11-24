@@ -175,6 +175,13 @@ As informações da conversa da Monike com a IA da Meta sobre esses públicos ai
 - Sem instalar app (navegador, pode ir para a tela inicial). Implantação a distância em até 7 dias úteis, todo o Brasil.
 - Preço: implantação R$ 1.500 (ou 3x R$ 500) + R$ 297/mês, sem fidelidade.
 
+### Proporção de conteúdo (definida pela Monike em 24/11/2026)
+
+- **80 a 90% educativo e de consciência:** ajudar o público a entender o problema (responsabilidade do síndico, manual do proprietário, garantia, NBR 5674, prestação de contas, papel da administradora), sem vender.
+- **10 a 20% venda:** posts que apresentam o Agenda, mostram o app por dentro, explicam preço, implantação e convidam para contato.
+- Nesta linha, conteúdo educativo sobre manutenção predial **é permitido** (a restrição a "aulas operacionais" vale só para a linha das engenheiras), sempre em linguagem simples para leigos.
+- Níveis de consciência a percorrer: não sabe que tem o problema → sabe do problema → conhece soluções → conhece o Agenda → pronto para contratar. A maior parte dos posts educa os três primeiros níveis.
+
 ### Regras desta linha
 
 - Mesma identidade visual (Preto Arquitetônico) e mesma voz conversada e observadora; aqui pode falar direto com o síndico.

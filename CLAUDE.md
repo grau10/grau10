@@ -14,7 +14,7 @@ Atue como estrategista editorial e diretor(a) de arte do Instagram @engmonike, m
 
 - **Prioritário:** mulheres engenheiras civis interessadas em transição de nicho, posicionamento e carreira valorizada (e arquitetas).
 - O conteúdo também serve a engenheiros; a voz e o tom são femininos ("engenheira", "colega", "a gente").
-- Não falar com pedreiros, mestres de obra, síndicos ou leigos.
+- Na linha do curso, não falar com pedreiros, mestres de obra ou leigos. Síndicos, moradores e administradoras são público da **Linha 2 (app Agenda)**, abaixo.
 - A atuação ensinada envolve serviços particulares para **construtoras** e para **proprietários/consumidores**, preservando a independência técnica.
 
 ## Objetivo
@@ -146,7 +146,42 @@ Títulos e roteiros já aprovados são o ponto de partida; manter assuntos e ada
 
 - Instagram @engmonike conectado ao Metricool (plano gratuito); agendar posts pelo conector do Metricool.
 - Fuso horário: America/Sao_Paulo.
-- Não usar o calendário de manutenção de condomínio (`calendario-condominio/`) como referência de conteúdo; é outro projeto.
+
+## Linha 2 — App Agenda para síndicos (mesmo perfil @engmonike)
+
+Desde 24/11/2026 o @engmonike também fala com o público de condomínios, com o objetivo de **vender o Agenda**, o app de manutenção para síndicos (nos arquivos do projeto aparece como **EngLink Síndico**; protótipo em `calendario-condominio/`, página de vendas em `landing/prompt-lovable-englink.md`, anúncios em `landing/anuncios-englink.md`).
+
+A Diretriz Estratégica (PDF) continua valendo para a linha das engenheiras. Esta linha tem regras próprias; a proporção entre as duas linhas no feed ainda será definida pela Monike `[confirmar com Monike]`.
+
+### Públicos
+
+| Público | Dor principal | Como o Agenda ajuda |
+|---|---|---|
+| Síndica(o) morador(a) de prédio novo | Responde pela conservação (Código Civil art. 1.348); não sabe o que o manual do proprietário exige; medo de perder a garantia da construtora | Calendário do prédio montado por engenheira a partir do manual, em linguagem simples |
+| Síndico(a) profissional | Vários prédios, prazos que ninguém lembra, prestação de contas | Calendário por prédio, ordem de serviço em 3 toques, histórico e visão geral para a assembleia |
+| Administradora | Recebe pedidos soltos, sem histórico | Ordens de serviço chegam pelo WhatsApp, como ela já trabalha; não precisa usar o sistema |
+| Moradores / conselho | "O que foi feito com o nosso dinheiro?" | Histórico, custos por mês e painel opcional na TV do hall |
+
+As informações da conversa da Monike com a IA da Meta sobre esses públicos ainda não foram registradas aqui `[aguardando Monike enviar]`.
+
+### O que o produto faz hoje (só prometer isto)
+
+- Calendário de manutenção das áreas comuns conforme a ABNT NBR 5674, montado por engenheira(o) a partir do manual do proprietário.
+- Cada item explica por que e como fazer, com a norma.
+- Ordem de serviço para 1, 2 ou 3 meses, enviada à administradora pelo WhatsApp em 3 toques.
+- Histórico (quem fez, quanto custou, nota fiscal, garantia) e livro de manutenção exportável; o histórico é do condomínio e passa ao próximo síndico.
+- Visão geral de custos e do que está em dia ou atrasado; acesso para síndico, subsíndico e conselho.
+- Painel opcional para TV no hall, com QR code.
+- Sem instalar app (navegador, pode ir para a tela inicial). Implantação a distância em até 7 dias úteis, todo o Brasil.
+- Preço: implantação R$ 1.500 (ou 3x R$ 500) + R$ 297/mês, sem fidelidade.
+
+### Regras desta linha
+
+- Mesma identidade visual (Preto Arquitetônico) e mesma voz conversada e observadora; aqui pode falar direto com o síndico.
+- Não usar medo ou ameaça como gancho principal; informar responsabilidade com serenidade.
+- Não inventar casos de prédios, clientes, multas ou números. Exemplos genéricos devem ser apresentados como possibilidade, não como fato.
+- Patologias explícitas continuam fora das capas.
+- CTA permitido e natural nesta linha (ex.: link na bio, "fale com a gente"), sem pressão.
 
 ## Edição de vídeo
 
